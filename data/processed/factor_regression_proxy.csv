@@ -1,0 +1,11 @@
+,0
+coef_const,
+coef_market_proxy,
+coef_mega_cap_proxy,
+coef_cross_sectional_dispersion,
+t_const,-0.7454203684517586
+t_market_proxy,2.0298606406704947
+t_mega_cap_proxy,-0.6484298278842489
+t_cross_sectional_dispersion,1.2006420443911168
+r_squared,0.044036526600274795
+n_obs,544.0

@@ -18,7 +18,7 @@ from quant_alpha.features import build_features
 from quant_alpha.signal import compute_alpha, compute_blended_alpha
 from quant_alpha.stats import false_discovery_report, newey_west_mean_test
 from quant_alpha.utils import ensure_dir, load_config, setup_logging
-from quant_alpha.validation import forward_returns, information_coefficient
+from quant_alpha.validation import evaluate_purged_walk_forward, forward_returns, information_coefficient
 
 
 def exclude_ticker(series: pd.Series, ticker: str) -> pd.Series:
@@ -253,6 +253,9 @@ def main() -> None:
         nw = newey_west_mean_test(year_ic, lags=5)
         walk_rows.append({"year": year, "rank_ic": year_ic.mean(), "nw_t_stat": nw["nw_t_stat"], "count": year_ic.count()})
     pd.DataFrame(walk_rows).to_csv(processed_dir / "walk_forward_yearly_ic.csv", index=False)
+    evaluate_purged_walk_forward(signal, target, train_years=3, test_months=6, embargo_days=5).to_csv(
+        processed_dir / "purged_walk_forward.csv", index=False
+    )
 
     sensitivity_rows = []
     for base_feature in ["return_1d", "return_5d", "momentum_21d", "residual_1d_return"]:

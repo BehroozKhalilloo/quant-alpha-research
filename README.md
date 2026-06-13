@@ -8,6 +8,8 @@ It is not a live trading system, broker integration, or investment recommendatio
 
 Quant research work is not just writing a return formula. A credible research workflow needs a clean data contract, explicit bias controls, careful signal timing, validation metrics, portfolio construction assumptions, and honest reporting. This repo is structured around that workflow.
 
+For an interviewer, the point of this project is not that a public-data daily equity signal is ready to trade. The point is that the research process exposes assumptions, tests failure modes, measures capacity and costs, and keeps the implementation reproducible.
+
 The implementation avoids toy moving-average crossover logic. The signal is cross-sectional, liquidity-aware, configurable across reversal specifications, and evaluated with IC, decile spreads, long-short returns, turnover, drawdown, transaction-cost sensitivity, train/test splits, bootstrap confidence intervals, regime diagnostics, and exposure diagnostics.
 
 The current default candidate is a pre-specified multi-sleeve blend: five-day reversal, residual one-day reversal, 21-day momentum, and a defensive price/volume quality proxy. In the included sample it improves the portfolio profile versus the pure five-day reversal sleeve: higher full-sample IC, higher Sharpe, lower drawdown, and better transaction-cost robustness. The repo is built to make those claims auditable rather than hand-waved.
@@ -108,6 +110,10 @@ Additional research controls now include:
 - sleeve ablation tests;
 - parameter sensitivity across signal definitions, liquidity thresholds, and volatility scaling;
 - capacity estimates using ADV participation and a square-root impact proxy.
+- purged walk-forward validation;
+- optional style neutralization against beta, size proxy, volatility, momentum, and liquidity;
+- proxy factor regression and hooks for user-supplied factor files;
+- a trader-facing fractional Kelly sizing module.
 
 Forward returns are computed from close at date `t` to close at date `t+h`. The prediction target is configurable through `config/default.yaml`.
 
@@ -199,6 +205,7 @@ Generate report figures and markdown:
 ```bash
 make robustness
 make diagnostics
+make trader
 make report
 ```
 
@@ -216,6 +223,7 @@ python scripts/run_research.py
 python scripts/run_backtest.py
 python scripts/run_robustness.py
 python scripts/run_diagnostics.py
+python scripts/run_trader_extension.py
 python scripts/generate_report.py
 pytest
 ```
@@ -247,6 +255,9 @@ data/processed/candidate_false_discovery.csv
 data/processed/sleeve_ablation.csv
 data/processed/parameter_sensitivity.csv
 data/processed/capacity_summary.csv
+data/processed/purged_walk_forward.csv
+data/processed/factor_regression_proxy.csv
+data/processed/kelly_sizing_scenarios.csv
 data/processed/weights.csv
 reports/generated_report.md
 reports/research_memo.md

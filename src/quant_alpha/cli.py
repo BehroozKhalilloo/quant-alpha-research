@@ -42,6 +42,12 @@ def run_diagnostics() -> None:
     _run_script("run_diagnostics.py")
 
 
+def run_trader_extension() -> None:
+    """Run trader-facing Kelly sizing scenario analysis."""
+
+    _run_script("run_trader_extension.py")
+
+
 def generate_report() -> None:
     """Generate markdown report and figures."""
 

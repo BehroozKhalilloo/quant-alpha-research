@@ -111,6 +111,9 @@ def main() -> None:
     ablation = read_optional_no_index(processed_dir / "sleeve_ablation.csv")
     sensitivity = read_optional_no_index(processed_dir / "parameter_sensitivity.csv")
     walk_forward = read_optional_no_index(processed_dir / "walk_forward_yearly_ic.csv")
+    purged = read_optional_no_index(processed_dir / "purged_walk_forward.csv")
+    factor = read_optional(processed_dir / "factor_regression_proxy.csv", parse_dates=False)
+    kelly = read_optional_no_index(processed_dir / "kelly_sizing_scenarios.csv")
 
     figure_lines: list[str] = []
     if returns is not None and "net_return" in returns:
@@ -209,6 +212,10 @@ def main() -> None:
                 "",
                 markdown_table(walk_forward.set_index("year") if walk_forward is not None and "year" in walk_forward else walk_forward),
                 "",
+                "## Purged Walk-Forward IC",
+                "",
+                markdown_table(purged.set_index("fold") if purged is not None and "fold" in purged else purged),
+                "",
                 "## Parameter Sensitivity",
                 "",
                 markdown_table(sensitivity.head(20) if sensitivity is not None else sensitivity),
@@ -224,6 +231,14 @@ def main() -> None:
                 "## Capacity Analysis",
                 "",
                 markdown_table(capacity.set_index("aum") if capacity is not None and "aum" in capacity else capacity),
+                "",
+                "## Proxy Factor Regression",
+                "",
+                markdown_table(factor),
+                "",
+                "## Trader Extension: Kelly Sizing",
+                "",
+                markdown_table(kelly.set_index("fractional_kelly") if kelly is not None and "fractional_kelly" in kelly else kelly),
                 "",
                 "## Bootstrap Confidence Intervals",
                 "",

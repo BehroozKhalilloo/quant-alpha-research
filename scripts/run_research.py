@@ -15,7 +15,7 @@ from scipy import stats
 from quant_alpha.data import load_market_data
 from quant_alpha.data_quality import summarize_quality_report, validate_market_data
 from quant_alpha.features import build_features
-from quant_alpha.signal import compute_alpha, compute_blended_alpha, naive_reversal_signal
+from quant_alpha.signal import apply_alpha_neutralization, compute_alpha, compute_blended_alpha, naive_reversal_signal
 from quant_alpha.stats import false_discovery_report, newey_west_mean_test
 from quant_alpha.utils import ensure_dir, load_config, setup_logging
 from quant_alpha.validation import (
@@ -37,23 +37,28 @@ def build_alpha(features: pd.DataFrame, signal_cfg: dict) -> pd.DataFrame:
     """Build single-sleeve or blended alpha from config."""
 
     if signal_cfg.get("mode", "single") == "blend":
-        return compute_blended_alpha(
+        alpha = compute_blended_alpha(
             features,
             sleeves=signal_cfg["sleeves"],
             winsor_lower=signal_cfg.get("winsor_lower", 0.01),
             winsor_upper=signal_cfg.get("winsor_upper", 0.99),
             shift_days=signal_cfg.get("shift_days", 1),
         )
-    return compute_alpha(
-        features,
-        base_feature=signal_cfg.get("base_feature", "residual_1d_return"),
-        direction=signal_cfg.get("direction", "reversal"),
-        vol_adjust=signal_cfg.get("vol_adjust", True),
-        liquidity_threshold=signal_cfg.get("liquidity_threshold", 0.4),
-        winsor_lower=signal_cfg.get("winsor_lower", 0.01),
-        winsor_upper=signal_cfg.get("winsor_upper", 0.99),
-        shift_days=signal_cfg.get("shift_days", 1),
-    )
+    else:
+        alpha = compute_alpha(
+            features,
+            base_feature=signal_cfg.get("base_feature", "residual_1d_return"),
+            direction=signal_cfg.get("direction", "reversal"),
+            vol_adjust=signal_cfg.get("vol_adjust", True),
+            liquidity_threshold=signal_cfg.get("liquidity_threshold", 0.4),
+            winsor_lower=signal_cfg.get("winsor_lower", 0.01),
+            winsor_upper=signal_cfg.get("winsor_upper", 0.99),
+            shift_days=signal_cfg.get("shift_days", 1),
+        )
+    neutral_cfg = signal_cfg.get("neutralize", {})
+    if neutral_cfg.get("enabled", False):
+        alpha = apply_alpha_neutralization(alpha, features, neutral_cfg.get("columns", []))
+    return alpha
 
 
 def main() -> None:

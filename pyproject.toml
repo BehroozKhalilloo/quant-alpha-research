@@ -31,6 +31,7 @@ run-validation = "quant_alpha.cli:run_research"
 run-backtest = "quant_alpha.cli:run_backtest"
 run-robustness = "quant_alpha.cli:run_robustness"
 run-diagnostics = "quant_alpha.cli:run_diagnostics"
+run-trader-extension = "quant_alpha.cli:run_trader_extension"
 generate-report = "quant_alpha.cli:generate_report"
 
 [tool.setuptools.packages.find]

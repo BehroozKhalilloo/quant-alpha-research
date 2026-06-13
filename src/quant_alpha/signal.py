@@ -122,6 +122,22 @@ def compute_blended_alpha(
     return out
 
 
+def apply_alpha_neutralization(alpha: pd.DataFrame, features: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    """Neutralize alpha against style exposures before the tradable shift."""
+
+    if not columns:
+        return alpha
+    from quant_alpha.neutralization import build_style_exposures, neutralize_signal
+
+    exposures = build_style_exposures(features)
+    neutral = neutralize_signal(alpha["alpha"], exposures, columns)
+    out = alpha.copy()
+    out["alpha_pre_neutralization"] = out["alpha"]
+    out["alpha"] = cross_sectional_zscore(neutral)
+    out["alpha_shifted"] = out["alpha"].groupby(level="ticker").shift(1)
+    return out
+
+
 def naive_reversal_signal(features: pd.DataFrame, shift_days: int = 1) -> pd.Series:
     """Simple cross-sectional one-day reversal baseline."""
 

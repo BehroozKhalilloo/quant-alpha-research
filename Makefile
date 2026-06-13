@@ -1,4 +1,4 @@
-.PHONY: install test data research backtest robustness diagnostics report all
+.PHONY: install test data research backtest robustness diagnostics trader report all
 
 install:
 	python -m pip install -e ".[dev]"
@@ -21,7 +21,10 @@ robustness:
 diagnostics:
 	python scripts/run_diagnostics.py
 
+trader:
+	python scripts/run_trader_extension.py
+
 report:
 	python scripts/generate_report.py
 
-all: data research backtest robustness diagnostics report test
+all: data research backtest robustness diagnostics trader report test

@@ -14,10 +14,11 @@ import pandas as pd
 from quant_alpha.backtest import benchmark_returns, run_long_short_backtest
 from quant_alpha.costs import capacity_table
 from quant_alpha.data import load_market_data
+from quant_alpha.factor import factor_regression, proxy_factor_returns
 from quant_alpha.features import build_features
 from quant_alpha.metrics import performance_summary
 from quant_alpha.risk import exposure_report
-from quant_alpha.signal import compute_alpha, compute_blended_alpha, naive_reversal_signal
+from quant_alpha.signal import apply_alpha_neutralization, compute_alpha, compute_blended_alpha, naive_reversal_signal
 from quant_alpha.utils import ensure_dir, load_config, setup_logging
 
 
@@ -31,23 +32,28 @@ def build_alpha(features: pd.DataFrame, signal_cfg: dict) -> pd.DataFrame:
     """Build single-sleeve or blended alpha from config."""
 
     if signal_cfg.get("mode", "single") == "blend":
-        return compute_blended_alpha(
+        alpha = compute_blended_alpha(
             features,
             sleeves=signal_cfg["sleeves"],
             winsor_lower=signal_cfg.get("winsor_lower", 0.01),
             winsor_upper=signal_cfg.get("winsor_upper", 0.99),
             shift_days=signal_cfg.get("shift_days", 1),
         )
-    return compute_alpha(
-        features,
-        base_feature=signal_cfg.get("base_feature", "residual_1d_return"),
-        direction=signal_cfg.get("direction", "reversal"),
-        vol_adjust=signal_cfg.get("vol_adjust", True),
-        liquidity_threshold=signal_cfg.get("liquidity_threshold", 0.4),
-        winsor_lower=signal_cfg.get("winsor_lower", 0.01),
-        winsor_upper=signal_cfg.get("winsor_upper", 0.99),
-        shift_days=signal_cfg.get("shift_days", 1),
-    )
+    else:
+        alpha = compute_alpha(
+            features,
+            base_feature=signal_cfg.get("base_feature", "residual_1d_return"),
+            direction=signal_cfg.get("direction", "reversal"),
+            vol_adjust=signal_cfg.get("vol_adjust", True),
+            liquidity_threshold=signal_cfg.get("liquidity_threshold", 0.4),
+            winsor_lower=signal_cfg.get("winsor_lower", 0.01),
+            winsor_upper=signal_cfg.get("winsor_upper", 0.99),
+            shift_days=signal_cfg.get("shift_days", 1),
+        )
+    neutral_cfg = signal_cfg.get("neutralize", {})
+    if neutral_cfg.get("enabled", False):
+        alpha = apply_alpha_neutralization(alpha, features, neutral_cfg.get("columns", []))
+    return alpha
 
 
 def main() -> None:
@@ -97,6 +103,7 @@ def main() -> None:
         aum_levels=config.get("capacity", {}).get("aum_levels", [1_000_000, 10_000_000, 50_000_000, 100_000_000]),
         impact_coefficient=config.get("capacity", {}).get("impact_coefficient", 0.10),
     )
+    factor_summary = factor_regression(result["net_returns"], proxy_factor_returns(market_data, benchmark=benchmark_ticker))
 
     result["weights"].to_csv(processed_dir / "weights.csv")
     pd.concat(
@@ -112,6 +119,7 @@ def main() -> None:
     ).to_csv(processed_dir / "backtest_returns.csv")
     result["summary"].to_csv(processed_dir / "backtest_summary.csv")
     capacity.to_csv(processed_dir / "capacity_summary.csv", index=False)
+    factor_summary.to_csv(processed_dir / "factor_regression_proxy.csv")
     performance_summary(naive["net_returns"]).to_csv(processed_dir / "naive_reversal_backtest_summary.csv")
     for name, value in risk.items():
         value.to_csv(processed_dir / f"{name}.csv")

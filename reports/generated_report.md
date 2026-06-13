@@ -96,6 +96,22 @@ This report is generated from local research artifacts. It intentionally does no
 | 2025 | 0.0136771 | 0.57032 | 250 |
 | 2026 | 0.0216288 | 0.550159 | 107 |
 
+## Purged Walk-Forward IC
+
+| metric | train_start | train_end | test_start | test_end | train_rank_ic | test_rank_ic | test_count |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 2018-04-02 | 2021-03-26 | 2021-04-02 | 2021-10-02 | 0.0354651 | 0.00770529 | 127 |
+| 2 | 2018-10-02 | 2021-09-27 | 2021-10-02 | 2022-04-02 | 0.021664 | -0.000377389 | 126 |
+| 3 | 2019-04-02 | 2022-03-28 | 2022-04-02 | 2022-10-02 | 0.00949457 | 0.050311 | 125 |
+| 4 | 2019-10-02 | 2022-09-26 | 2022-10-02 | 2023-04-02 | 0.0147536 | -0.0111722 | 125 |
+| 5 | 2020-04-02 | 2023-03-27 | 2023-04-02 | 2023-10-02 | 0.0134497 | -0.00252106 | 126 |
+| 6 | 2020-10-02 | 2023-09-25 | 2023-10-02 | 2024-04-02 | 0.00785483 | -0.00687156 | 126 |
+| 7 | 2021-04-02 | 2024-03-26 | 2024-04-02 | 2024-10-02 | 0.00604231 | 0.0329193 | 128 |
+| 8 | 2021-10-02 | 2024-09-25 | 2024-10-02 | 2025-04-02 | 0.0104993 | -0.0367469 | 125 |
+| 9 | 2022-04-02 | 2025-03-26 | 2025-04-02 | 2025-10-02 | 0.00501885 | 0.0124088 | 127 |
+| 10 | 2022-10-02 | 2025-09-25 | 2025-10-02 | 2026-04-02 | -0.0027165 | 0.0388751 | 126 |
+| 11 | 2023-04-02 | 2026-03-26 | 2026-04-02 | 2026-06-05 | 0.00440031 | 0.037678 | 45 |
+
 ## Parameter Sensitivity
 
 | metric | base_feature | direction | liquidity_threshold | vol_adjust | rank_ic | nw_t_stat | count |
@@ -150,6 +166,31 @@ This report is generated from local research artifacts. It intentionally does no
 | 50000000 | 37.6817 | 0.00416286 | 0.0434971 | -0.704823 | 0.143122 | -4.92465 |
 | 100000000 | 53.29 | 0.00832572 | 0.0869941 | -1.09815 | 0.156246 | -7.02836 |
 
+## Proxy Factor Regression
+
+| metric | 0 |
+| --- | --- |
+| coef_const |  |
+| coef_market_proxy |  |
+| coef_mega_cap_proxy |  |
+| coef_cross_sectional_dispersion |  |
+| t_const | -0.74542 |
+| t_market_proxy | 2.02986 |
+| t_mega_cap_proxy | -0.64843 |
+| t_cross_sectional_dispersion | 1.20064 |
+| r_squared | 0.0440365 |
+| n_obs | 544 |
+
+## Trader Extension: Kelly Sizing
+
+| metric | full_kelly | bet_fraction | terminal_wealth_p05 | terminal_wealth_median | terminal_wealth_p95 | probability_loss | median_max_drawdown | p05_max_drawdown |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0.0 | 0.072619 | 0 | 1 | 1 | 1 | 0 | 0 | 0 |
+| 0.25 | 0.072619 | 0.0181548 | 0.827221 | 1.34175 | 2.17633 | 0.1518 | -0.206166 | -0.359848 |
+| 0.5 | 0.072619 | 0.0363095 | 0.627198 | 1.64992 | 4.34029 | 0.1878 | -0.378777 | -0.608721 |
+| 0.75 | 0.072619 | 0.0544643 | 0.435769 | 1.8596 | 7.93564 | 0.2252 | -0.522414 | -0.771567 |
+| 1.0 | 0.072619 | 0.072619 | 0.277334 | 1.92096 | 13.3056 | 0.2634 | -0.646273 | -0.873925 |
+
 ## Bootstrap Confidence Intervals
 
 | metric | p05 | median | p95 |
@@ -162,7 +203,7 @@ This report is generated from local research artifacts. It intentionally does no
 
 | metric | rows_flagged | columns |
 | --- | --- | --- |
-| missing_by_ticker | 50 | low,open,volume,high,close,adj_close |
+| missing_by_ticker | 50 | volume,close,high,low,open,adj_close |
 | nonpositive_prices | 0 | open,high,low,close,adj_close |
 | negative_volume | 0 | volume |
 | stale_prices | 0 | is_stale |

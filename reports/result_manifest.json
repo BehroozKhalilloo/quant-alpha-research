@@ -1,6 +1,6 @@
 {
-  "generated_at_utc": "2026-06-13T18:58:55.646331+00:00",
-  "git_commit": "cd5583af3ade4d76142612df4e3e1ee401e47d21",
+  "generated_at_utc": "2026-06-13T21:40:22.991362+00:00",
+  "git_commit": "47d9e2b669e5a5b7dbf53a3d71a6cdee6e984447",
   "config": {
     "data": {
       "provider": "yfinance",
@@ -71,6 +71,14 @@
     },
     "signal": {
       "mode": "blend",
+      "neutralize": {
+        "enabled": false,
+        "columns": [
+          "beta",
+          "volatility",
+          "liquidity"
+        ]
+      },
       "sleeves": {
         "reversal_5d": 0.8,
         "residual_reversal_1d": 0.1,
@@ -109,6 +117,17 @@
     "robustness": {
       "split_date": "2022-01-01"
     },
+    "trader_extension": {
+      "win_probability": 0.525,
+      "win_loss_ratio": 1.05,
+      "fractions": [
+        0.0,
+        0.25,
+        0.5,
+        0.75,
+        1.0
+      ]
+    },
     "report": {
       "output_file": "reports/generated_report.md",
       "figures_dir": "reports/figures"
@@ -130,17 +149,20 @@
     "data/processed/data_quality_summary.csv",
     "data/processed/decile_forward_returns.csv",
     "data/processed/drawdown_events.csv",
+    "data/processed/factor_regression_proxy.csv",
     "data/processed/false_discovery_report.csv",
     "data/processed/features.csv",
     "data/processed/gross_exposure.csv",
     "data/processed/ic_series.csv",
     "data/processed/ic_summary.csv",
+    "data/processed/kelly_sizing_scenarios.csv",
     "data/processed/monthly_returns.csv",
     "data/processed/naive_reversal_backtest_summary.csv",
     "data/processed/naive_reversal_ic_summary.csv",
     "data/processed/net_exposure.csv",
     "data/processed/newey_west_ic_summary.csv",
     "data/processed/parameter_sensitivity.csv",
+    "data/processed/purged_walk_forward.csv",
     "data/processed/rank_ic_by_year.csv",
     "data/processed/regime_summary.csv",
     "data/processed/robustness_candidates.csv",

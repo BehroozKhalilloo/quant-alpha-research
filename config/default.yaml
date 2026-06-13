@@ -66,6 +66,12 @@ features:
 
 signal:
   mode: blend
+  neutralize:
+    enabled: false
+    columns:
+      - beta
+      - volatility
+      - liquidity
   sleeves:
     reversal_5d: 0.80
     residual_reversal_1d: 0.10
@@ -101,6 +107,16 @@ capacity:
 
 robustness:
   split_date: "2022-01-01"
+
+trader_extension:
+  win_probability: 0.525
+  win_loss_ratio: 1.05
+  fractions:
+    - 0.0
+    - 0.25
+    - 0.5
+    - 0.75
+    - 1.0
 
 report:
   output_file: reports/generated_report.md

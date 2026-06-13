@@ -96,3 +96,64 @@ def pearson_spearman_summary(signal: pd.Series, target: pd.Series) -> pd.DataFra
     for method in ["pearson", "spearman"]:
         rows[method] = ic_summary(information_coefficient(signal, target, method=method))
     return pd.DataFrame(rows).T
+
+
+def purged_walk_forward_splits(
+    dates: pd.DatetimeIndex,
+    train_years: int = 3,
+    test_months: int = 6,
+    embargo_days: int = 5,
+) -> list[tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp, pd.Timestamp]]:
+    """Create purged walk-forward train/test date windows.
+
+    Returns tuples of train_start, train_end, test_start, test_end. The embargo
+    gap between train_end and test_start reduces label overlap leakage for
+    multi-day forward returns.
+    """
+
+    unique_dates = pd.DatetimeIndex(sorted(pd.unique(dates)))
+    if unique_dates.empty:
+        return []
+    start = unique_dates.min() + pd.DateOffset(years=train_years)
+    end = unique_dates.max()
+    splits = []
+    test_start = start
+    while test_start < end:
+        train_start = test_start - pd.DateOffset(years=train_years)
+        train_end = test_start - pd.offsets.BDay(embargo_days)
+        test_end = min(test_start + pd.DateOffset(months=test_months), end)
+        if train_start < train_end < test_start < test_end:
+            splits.append((pd.Timestamp(train_start), pd.Timestamp(train_end), pd.Timestamp(test_start), pd.Timestamp(test_end)))
+        test_start = test_end
+    return splits
+
+
+def evaluate_purged_walk_forward(
+    signal: pd.Series,
+    target: pd.Series,
+    train_years: int = 3,
+    test_months: int = 6,
+    embargo_days: int = 5,
+) -> pd.DataFrame:
+    """Evaluate rank IC on purged walk-forward test windows."""
+
+    ic = information_coefficient(signal, target, method="spearman")
+    rows = []
+    for i, (train_start, train_end, test_start, test_end) in enumerate(
+        purged_walk_forward_splits(ic.index, train_years, test_months, embargo_days), start=1
+    ):
+        train_ic = ic.loc[(ic.index >= train_start) & (ic.index <= train_end)].dropna()
+        test_ic = ic.loc[(ic.index >= test_start) & (ic.index <= test_end)].dropna()
+        rows.append(
+            {
+                "fold": i,
+                "train_start": train_start,
+                "train_end": train_end,
+                "test_start": test_start,
+                "test_end": test_end,
+                "train_rank_ic": train_ic.mean(),
+                "test_rank_ic": test_ic.mean(),
+                "test_count": len(test_ic),
+            }
+        )
+    return pd.DataFrame(rows)

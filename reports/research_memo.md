@@ -10,6 +10,10 @@ The sample results are promising but not institutional proof. The free-data vers
 
 Can short-term cross-sectional dislocations in liquid equities be harvested after accounting for market residualization, liquidity, volatility, turnover, and realistic implementation frictions?
 
+## Falsification Criteria
+
+The signal should be rejected or substantially revised if post-formation tests show unstable or negative out-of-sample rank IC, performance concentrated in a small number of dates, cost-adjusted returns that disappear under moderate transaction costs, capacity estimates that are incompatible with realistic AUM, or factor regressions showing the result is only disguised market, momentum, volatility, or liquidity exposure.
+
 ## Economic Intuition
 
 Short-horizon reversal can arise from liquidity provision, temporary price pressure, inventory rebalancing, index-flow spillovers, and overreaction to idiosyncratic news. The effect should be strongest when the stock is liquid enough to trade and the move is not merely broad market beta. It should decay when trading costs rise, when volatility regimes destabilize, when the universe is crowded, or when the move reflects durable information rather than temporary pressure.
@@ -54,11 +58,11 @@ See `reports/generated_report.md` for regenerated tables and figures. The latest
 
 ## Robustness
 
-The multi-sleeve blend improves portfolio-level metrics versus the pure five-day reversal sleeve in the included sample. However, robustness is not uniform: negative 21-day market-trend regimes remain challenging, and capacity estimates deteriorate quickly under square-root impact assumptions.
+The multi-sleeve blend improves portfolio-level metrics versus the pure five-day reversal sleeve in the included sample. Robustness reporting includes sleeve ablation, parameter sensitivity, false-discovery checks, Newey-West inference, purged walk-forward validation, and bootstrap confidence intervals. However, robustness is not uniform: negative 21-day market-trend regimes remain challenging, and capacity estimates deteriorate quickly under square-root impact assumptions.
 
 ## Risk Analysis
 
-The report includes gross exposure, net exposure, beta exposure, concentration, rolling Sharpe, rolling drawdown, largest drawdowns, and regime performance. Sector exposure is supported when sector metadata is supplied, but point-in-time sector metadata is not included in the free-data version.
+The report includes gross exposure, net exposure, beta exposure, concentration, rolling Sharpe, rolling drawdown, largest drawdowns, regime performance, and a proxy factor regression. Sector exposure is supported when sector metadata is supplied, but point-in-time sector metadata is not included in the free-data version.
 
 ## Transaction Costs and Capacity
 
@@ -81,3 +85,6 @@ Flat bps cost sensitivity is shown alongside square-root impact capacity estimat
 4. Add borrow cost and short availability assumptions.
 5. Run true out-of-sample validation across broader universes and international markets.
 
+## Trader-Facing Extension
+
+The repository includes a fractional Kelly sizing scenario module. It is intentionally separate from the daily alpha backtest and demonstrates expected-value reasoning, position sizing, risk of loss, and drawdown trade-offs for a stylized edge.
