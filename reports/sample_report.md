@@ -30,6 +30,8 @@ After running `python scripts/run_backtest.py`, this section can be populated wi
 
 After running `python scripts/run_robustness.py`, this section can also include candidate comparisons, pre/post split rank IC, and transaction-cost sensitivity. A credible positive result should survive basic comparisons against weaker variants and should not rely on zero-cost assumptions.
 
+After running `python scripts/run_diagnostics.py`, this section can include bootstrap confidence intervals, rolling performance, monthly returns, drawdown events, and market-regime summaries.
+
 ## Risk Analysis
 
 The backtest records gross exposure, net exposure, beta exposure versus SPY, and concentration. Sector exposure can be added when point-in-time sector metadata is supplied. Transaction-cost sensitivity should be reviewed before interpreting any positive cumulative return as robust alpha.

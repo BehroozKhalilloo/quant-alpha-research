@@ -24,6 +24,8 @@ This report is generated from local research artifacts. It intentionally does no
 
 ![Transaction Cost Sensitivity](figures/cost_sensitivity.png)
 
+![Rolling 126-Day Sharpe](figures/rolling_126d_sharpe.png)
+
 ## IC Summary
 
 | metric | mean | std | t_stat | count |
@@ -73,9 +75,36 @@ This report is generated from local research artifacts. It intentionally does no
 | 10.0 | 0.145569 | 0.127204 | 1.14438 | 1.64003 | -0.105871 | 0.538603 |
 | 20.0 | 0.046381 | 0.127643 | 0.363365 | 0.523892 | -0.168846 | 0.509191 |
 
+## Bootstrap Confidence Intervals
+
+| metric | p05 | median | p95 |
+| --- | --- | --- | --- |
+| annualized_return | 0.0272207 | 0.164729 | 0.296186 |
+| sharpe_ratio | 0.209649 | 1.30121 | 2.39354 |
+| max_drawdown | -0.187837 | -0.108899 | -0.0673464 |
+
+## Regime Summary
+
+| metric | count | annualized_return | annualized_volatility | sharpe_ratio | sortino_ratio | max_drawdown | hit_rate |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| ('market_regime', 'negative_21d_trend') | 191 | -0.23537 | 0.128597 | -1.83029 | -2.14434 | -0.22779 | 0.47644 |
+| ('market_regime', 'positive_21d_trend') | 353 | 0.428114 | 0.123926 | 3.4546 | 6.12471 | -0.0397335 | 0.589235 |
+| ('vol_regime', 'high_vol') | 282 | 0.184218 | 0.152379 | 1.20895 | 1.73638 | -0.135226 | 0.535461 |
+| ('vol_regime', 'low_vol') | 262 | 0.206944 | 0.0926321 | 2.23404 | 3.522 | -0.06324 | 0.564885 |
+
+## Largest Drawdowns
+
+| metric | start | trough | recovery | max_drawdown | days_to_trough | days_to_recovery |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 | 2025-02-12 | 2025-05-14 | 2026-04-23 | -0.102241 | 91 | 435 |
+| 1 | 2020-06-19 | 2021-11-04 | 2022-05-13 | -0.0884392 | 503 | 693 |
+| 2 | 2023-01-12 | 2023-05-22 | 2024-12-11 | -0.0791374 | 130 | 699 |
+| 3 | 2018-07-02 | 2018-10-19 | 2018-11-26 | -0.0412804 | 109 | 147 |
+| 4 | 2020-03-11 | 2020-03-23 | 2020-03-24 | -0.0282847 | 12 | 13 |
+
 ## Interpretation
 
-The selected multi-sleeve blend has positive full-sample IC, positive pre/post split rank IC, stronger Sharpe and drawdown than the pure reversal sleeve, and remains positive across the displayed transaction-cost stress range. The evidence is stronger than the single-sleeve baseline, but it is still research evidence: the default universe is not point-in-time, the quality sleeve is a price/volume proxy rather than a fundamental factor, and live implementation details are intentionally out of scope.
+The selected multi-sleeve blend has positive full-sample IC, positive pre/post split rank IC, stronger Sharpe and drawdown than the pure reversal sleeve, and remains positive across the displayed transaction-cost stress range. Bootstrap intervals and rolling diagnostics make the result easier to audit. Regime analysis shows the strategy is materially stronger in positive 21-day market trends and weaker in negative trend regimes, so the evidence is stronger than the single-sleeve baseline but still not production proof.
 
 ## Disclaimer
 

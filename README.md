@@ -8,7 +8,7 @@ It is not a live trading system, broker integration, or investment recommendatio
 
 Quant research work is not just writing a return formula. A credible research workflow needs a clean data contract, explicit bias controls, careful signal timing, validation metrics, portfolio construction assumptions, and honest reporting. This repo is structured around that workflow.
 
-The implementation avoids toy moving-average crossover logic. The signal is cross-sectional, liquidity-aware, configurable across reversal specifications, and evaluated with IC, decile spreads, long-short returns, turnover, drawdown, transaction-cost sensitivity, train/test splits, and exposure diagnostics.
+The implementation avoids toy moving-average crossover logic. The signal is cross-sectional, liquidity-aware, configurable across reversal specifications, and evaluated with IC, decile spreads, long-short returns, turnover, drawdown, transaction-cost sensitivity, train/test splits, bootstrap confidence intervals, regime diagnostics, and exposure diagnostics.
 
 The current default candidate is a pre-specified multi-sleeve blend: five-day reversal, residual one-day reversal, 21-day momentum, and a defensive price/volume quality proxy. In the included sample it improves the portfolio profile versus the pure five-day reversal sleeve: higher full-sample IC, higher Sharpe, lower drawdown, and better transaction-cost robustness. The repo is built to make those claims auditable rather than hand-waved.
 
@@ -91,6 +91,14 @@ The shifted signal is used for validation and backtesting to reduce look-ahead r
 - pre/post split rank IC using the configured split date;
 - transaction-cost sensitivity for the selected default;
 - evidence that the selected candidate improves portfolio-level metrics versus weaker baseline variants.
+
+`scripts/run_diagnostics.py` adds:
+
+- moving-block bootstrap confidence intervals;
+- rolling 126-day performance diagnostics;
+- monthly return table;
+- largest drawdown events;
+- performance by simple market and volatility regimes.
 
 Forward returns are computed from close at date `t` to close at date `t+h`. The prediction target is configurable through `config/default.yaml`.
 
@@ -181,6 +189,7 @@ Generate report figures and markdown:
 
 ```bash
 make robustness
+make diagnostics
 make report
 ```
 
@@ -197,6 +206,7 @@ python scripts/download_data.py
 python scripts/run_research.py
 python scripts/run_backtest.py
 python scripts/run_robustness.py
+python scripts/run_diagnostics.py
 python scripts/generate_report.py
 pytest
 ```
@@ -216,6 +226,11 @@ data/processed/backtest_returns.csv
 data/processed/backtest_summary.csv
 data/processed/robustness_candidates.csv
 data/processed/cost_sensitivity.csv
+data/processed/bootstrap_summary.csv
+data/processed/rolling_performance.csv
+data/processed/monthly_returns.csv
+data/processed/regime_summary.csv
+data/processed/drawdown_events.csv
 data/processed/weights.csv
 reports/generated_report.md
 reports/figures/*.png

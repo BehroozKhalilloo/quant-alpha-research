@@ -97,6 +97,10 @@ def main() -> None:
     naive_summary = read_optional(processed_dir / "naive_reversal_backtest_summary.csv", parse_dates=False)
     robustness = read_optional_no_index(processed_dir / "robustness_candidates.csv")
     cost_sensitivity = read_optional(processed_dir / "cost_sensitivity.csv", parse_dates=False)
+    bootstrap = read_optional(processed_dir / "bootstrap_summary.csv", parse_dates=False)
+    regime = read_optional_no_index(processed_dir / "regime_summary.csv")
+    drawdowns = read_optional_no_index(processed_dir / "drawdown_events.csv")
+    rolling = read_optional(processed_dir / "rolling_performance.csv")
 
     figure_lines: list[str] = []
     if returns is not None and "net_return" in returns:
@@ -146,6 +150,15 @@ def main() -> None:
         )
         if link:
             figure_lines.append(link)
+    if rolling is not None and "rolling_sharpe" in rolling:
+        fig, ax = plt.subplots(figsize=(9, 3))
+        rolling["rolling_sharpe"].plot(ax=ax)
+        ax.axhline(0.0, color="black", linewidth=1)
+        ax.set_title("Rolling 126-Day Sharpe")
+        ax.grid(True, alpha=0.3)
+        fig.savefig(figures_dir / "rolling_126d_sharpe.png", bbox_inches="tight", dpi=150)
+        plt.close(fig)
+        figure_lines.append("![Rolling 126-Day Sharpe](figures/rolling_126d_sharpe.png)")
 
     output_file.write_text(
         "\n".join(
@@ -178,9 +191,21 @@ def main() -> None:
                 "",
                 markdown_table(cost_sensitivity),
                 "",
+                "## Bootstrap Confidence Intervals",
+                "",
+                markdown_table(bootstrap),
+                "",
+                "## Regime Summary",
+                "",
+                markdown_table(regime.set_index(["group", "regime"]) if regime is not None and {"group", "regime"}.issubset(regime.columns) else regime),
+                "",
+                "## Largest Drawdowns",
+                "",
+                markdown_table(drawdowns),
+                "",
                 "## Interpretation",
                 "",
-                "The selected multi-sleeve blend has positive full-sample IC, positive pre/post split rank IC, stronger Sharpe and drawdown than the pure reversal sleeve, and remains positive across the displayed transaction-cost stress range. The evidence is stronger than the single-sleeve baseline, but it is still research evidence: the default universe is not point-in-time, the quality sleeve is a price/volume proxy rather than a fundamental factor, and live implementation details are intentionally out of scope.",
+                "The selected multi-sleeve blend has positive full-sample IC, positive pre/post split rank IC, stronger Sharpe and drawdown than the pure reversal sleeve, and remains positive across the displayed transaction-cost stress range. Bootstrap intervals and rolling diagnostics make the result easier to audit. Regime analysis shows the strategy is materially stronger in positive 21-day market trends and weaker in negative trend regimes, so the evidence is stronger than the single-sleeve baseline but still not production proof.",
                 "",
                 "## Disclaimer",
                 "",
