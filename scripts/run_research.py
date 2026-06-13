@@ -24,6 +24,12 @@ from quant_alpha.validation import (
 )
 
 
+def exclude_ticker(series: pd.Series, ticker: str) -> pd.Series:
+    """Remove a ticker from a MultiIndex Series."""
+
+    return series[series.index.get_level_values("ticker") != ticker]
+
+
 def main() -> None:
     config = load_config(ROOT / "config/default.yaml")
     setup_logging(config.get("logging", {}).get("level", "INFO"))
@@ -54,8 +60,10 @@ def main() -> None:
     )
     horizon = validation_cfg.get("forward_horizon", 1)
     target = forward_returns(market_data, horizon=horizon)
-    signal = alpha["alpha_shifted"]
-    naive = naive_reversal_signal(features, shift_days=signal_cfg.get("shift_days", 1))
+    benchmark = data_cfg.get("benchmark", "SPY")
+    signal = exclude_ticker(alpha["alpha_shifted"], benchmark)
+    target = exclude_ticker(target, benchmark)
+    naive = exclude_ticker(naive_reversal_signal(features, shift_days=signal_cfg.get("shift_days", 1)), benchmark)
 
     ic_pearson = information_coefficient(signal, target, method="pearson")
     ic_spearman = information_coefficient(signal, target, method="spearman")
@@ -76,4 +84,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

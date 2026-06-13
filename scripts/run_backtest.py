@@ -20,6 +20,12 @@ from quant_alpha.signal import compute_alpha, naive_reversal_signal
 from quant_alpha.utils import ensure_dir, load_config, setup_logging
 
 
+def exclude_ticker(series: pd.Series, ticker: str) -> pd.Series:
+    """Remove a ticker from a MultiIndex Series."""
+
+    return series[series.index.get_level_values("ticker") != ticker]
+
+
 def main() -> None:
     config = load_config(ROOT / "config/default.yaml")
     setup_logging(config.get("logging", {}).get("level", "INFO"))
@@ -30,11 +36,17 @@ def main() -> None:
         raise FileNotFoundError(f"Market data not found at {data_file}. Run python scripts/download_data.py first.")
 
     market_data = load_market_data(data_file)
-    features = build_features(market_data, benchmark=data_cfg.get("benchmark", "SPY"), **config["features"])
+    benchmark_ticker = data_cfg.get("benchmark", "SPY")
+    features = build_features(market_data, benchmark=benchmark_ticker, **config["features"])
     alpha = compute_alpha(features, **config["signal"])
+    signal = exclude_ticker(alpha["alpha_shifted"], benchmark_ticker)
+    naive_signal = exclude_ticker(
+        naive_reversal_signal(features, shift_days=config["signal"].get("shift_days", 1)),
+        benchmark_ticker,
+    )
     result = run_long_short_backtest(
         market_data=market_data,
-        signal=alpha["alpha_shifted"],
+        signal=signal,
         quantiles=config["validation"].get("quantiles", 10),
         transaction_cost_bps=config["backtest"].get("transaction_cost_bps", 5.0),
         max_weight=config["portfolio"].get("max_weight", 0.10),
@@ -44,14 +56,14 @@ def main() -> None:
     )
     naive = run_long_short_backtest(
         market_data=market_data,
-        signal=naive_reversal_signal(features, shift_days=config["signal"].get("shift_days", 1)),
+        signal=naive_signal,
         quantiles=config["validation"].get("quantiles", 10),
         transaction_cost_bps=config["backtest"].get("transaction_cost_bps", 5.0),
         max_weight=config["portfolio"].get("max_weight", 0.10),
         holding_period=config["backtest"].get("holding_period", 1),
         weighting="equal",
     )
-    benchmark = benchmark_returns(market_data, benchmark=data_cfg.get("benchmark", "SPY"))
+    benchmark = benchmark_returns(market_data, benchmark=benchmark_ticker)
     risk = exposure_report(result["weights"], beta=features["market_beta"])
 
     result["weights"].to_csv(processed_dir / "weights.csv")
@@ -75,4 +87,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

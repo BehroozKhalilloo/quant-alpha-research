@@ -47,8 +47,8 @@ def compute_alpha(
     alpha_raw = -residual_z
     vol = features["realized_vol_21d"].clip(lower=min_vol)
     alpha_vol_adj = alpha_raw / vol
-    liquidity_filter = (features["liquidity_rank"] >= liquidity_threshold).astype(float)
-    alpha = alpha_vol_adj * liquidity_filter
+    liquidity_filter = features["liquidity_rank"] >= liquidity_threshold
+    alpha = alpha_vol_adj.where(liquidity_filter)
     alpha = cross_sectional_winsorize(alpha.replace([np.inf, -np.inf], np.nan), winsor_lower, winsor_upper)
     alpha = cross_sectional_zscore(alpha)
     shifted = alpha.groupby(level="ticker").shift(shift_days)
@@ -57,7 +57,7 @@ def compute_alpha(
         {
             "alpha_raw": alpha_raw,
             "alpha_vol_adj": alpha_vol_adj,
-            "liquidity_filter": liquidity_filter,
+            "liquidity_filter": liquidity_filter.astype(float),
             "alpha": alpha,
             "alpha_shifted": shifted,
         }
@@ -71,4 +71,3 @@ def naive_reversal_signal(features: pd.DataFrame, shift_days: int = 1) -> pd.Ser
 
     signal = -cross_sectional_zscore(features["return_1d"])
     return signal.groupby(level="ticker").shift(shift_days).rename("naive_reversal")
-
