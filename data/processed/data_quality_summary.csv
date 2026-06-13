@@ -1,5 +1,5 @@
 check,rows_flagged,columns
-missing_by_ticker,50,"volume,close,high,low,open,adj_close"
+missing_by_ticker,50,"open,low,adj_close,high,close,volume"
 nonpositive_prices,0,"open,high,low,close,adj_close"
 negative_volume,0,volume
 stale_prices,0,is_stale

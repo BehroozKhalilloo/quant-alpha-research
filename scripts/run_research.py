@@ -13,7 +13,12 @@ import pandas as pd
 from scipy import stats
 
 from quant_alpha.data import load_market_data
-from quant_alpha.data_quality import summarize_quality_report, validate_market_data
+from quant_alpha.data_quality import (
+    apply_point_in_time_universe,
+    load_universe_membership,
+    summarize_quality_report,
+    validate_market_data,
+)
 from quant_alpha.features import build_features
 from quant_alpha.signal import apply_alpha_neutralization, compute_alpha, compute_blended_alpha, naive_reversal_signal
 from quant_alpha.stats import false_discovery_report, newey_west_mean_test
@@ -91,6 +96,11 @@ def main() -> None:
     signal = exclude_ticker(alpha["alpha_shifted"], benchmark)
     target = exclude_ticker(target, benchmark)
     naive = exclude_ticker(naive_reversal_signal(features, shift_days=signal_cfg.get("shift_days", 1)), benchmark)
+    membership_file = data_cfg.get("universe_membership_file")
+    if membership_file:
+        membership = load_universe_membership(str(ROOT / membership_file))
+        signal = apply_point_in_time_universe(signal, membership)
+        naive = apply_point_in_time_universe(naive, membership)
 
     ic_pearson = information_coefficient(signal, target, method="pearson")
     ic_spearman = information_coefficient(signal, target, method="spearman")

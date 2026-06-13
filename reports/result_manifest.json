@@ -1,12 +1,15 @@
 {
-  "generated_at_utc": "2026-06-13T21:40:22.991362+00:00",
-  "git_commit": "47d9e2b669e5a5b7dbf53a3d71a6cdee6e984447",
+  "generated_at_utc": "2026-06-13T22:53:14.145727+00:00",
+  "git_commit": "5260eeb1f7b976aa37dd0630b1adbe0c9ced4c9e",
   "config": {
     "data": {
       "provider": "yfinance",
       "raw_dir": "data/raw",
       "processed_dir": "data/processed",
       "market_data_file": "data/raw/ohlcv.csv",
+      "universe_membership_file": null,
+      "factor_returns_file": null,
+      "borrow_cost_file": null,
       "benchmark": "SPY",
       "start_date": "2018-01-01",
       "end_date": null,
@@ -99,11 +102,19 @@
     },
     "portfolio": {
       "weighting": "equal",
-      "max_weight": 0.125
+      "max_weight": 0.125,
+      "neutralize": {
+        "enabled": false,
+        "columns": [
+          "beta",
+          "volatility"
+        ]
+      }
     },
     "backtest": {
       "holding_period": 5,
-      "transaction_cost_bps": 5.0
+      "transaction_cost_bps": 5.0,
+      "annual_borrow_bps": 0.0
     },
     "capacity": {
       "aum_levels": [
@@ -126,7 +137,15 @@
         0.5,
         0.75,
         1.0
-      ]
+      ],
+      "execution": {
+        "shares": 100000,
+        "intervals": 20,
+        "volatility": 0.02,
+        "risk_aversion": 1e-06,
+        "temporary_impact": 1e-07,
+        "permanent_impact": 0.0
+      }
     },
     "report": {
       "output_file": "reports/generated_report.md",
@@ -137,6 +156,7 @@
     }
   },
   "artifacts": [
+    "data/processed/almgren_chriss_schedule.csv",
     "data/processed/alpha.csv",
     "data/processed/backtest_returns.csv",
     "data/processed/backtest_summary.csv",

@@ -64,3 +64,46 @@ def kelly_scenario_grid(
         ignore_index=True,
     )
 
+
+def almgren_chriss_schedule(
+    shares: float,
+    intervals: int,
+    volatility: float,
+    risk_aversion: float,
+    temporary_impact: float,
+    permanent_impact: float = 0.0,
+) -> pd.DataFrame:
+    """Compute a simple Almgren-Chriss liquidation schedule.
+
+    The implementation uses the standard hyperbolic trajectory for temporary
+    impact and inventory risk. Units are abstract and intended for scenario
+    analysis, not production execution.
+    """
+
+    if intervals <= 0:
+        raise ValueError("intervals must be positive")
+    if shares <= 0 or volatility < 0 or risk_aversion < 0 or temporary_impact <= 0:
+        raise ValueError("invalid Almgren-Chriss parameters")
+    times = np.arange(intervals + 1)
+    if risk_aversion == 0 or volatility == 0:
+        inventory = shares * (1.0 - times / intervals)
+    else:
+        kappa = np.sqrt(risk_aversion * volatility**2 / temporary_impact)
+        grid = intervals - times
+        inventory = shares * np.sinh(kappa * grid) / np.sinh(kappa * intervals)
+    trades = -np.diff(inventory, prepend=shares)
+    trades[0] = 0.0
+    temporary_cost = temporary_impact * trades**2
+    permanent_cost = permanent_impact * trades * np.maximum(inventory, 0.0)
+    risk_penalty = risk_aversion * volatility**2 * inventory**2
+    return pd.DataFrame(
+        {
+            "interval": times,
+            "inventory": inventory,
+            "trade": trades,
+            "temporary_cost": temporary_cost,
+            "permanent_cost": permanent_cost,
+            "risk_penalty": risk_penalty,
+            "total_objective_cost": temporary_cost + permanent_cost + risk_penalty,
+        }
+    )

@@ -78,6 +78,39 @@ def turnover(weights: pd.DataFrame) -> pd.Series:
     return (weights.fillna(0.0).diff().abs().sum(axis=1) / 2.0).rename("turnover")
 
 
+def neutralize_portfolio_weights(
+    weights: pd.DataFrame,
+    exposures: pd.DataFrame,
+    exposure_columns: list[str],
+    max_weight: float,
+) -> pd.DataFrame:
+    """Residualize daily weights against style exposures and rescale books.
+
+    This is a lightweight projection-based neutralizer, not a full optimizer.
+    It is useful when a reviewer wants to inspect beta/style-neutral variants
+    without introducing a heavy optimization dependency.
+    """
+
+    if not exposure_columns or weights.empty:
+        return weights
+    out = []
+    for date, day_weights in weights.iterrows():
+        if date not in exposures.index.get_level_values("date"):
+            out.append(day_weights)
+            continue
+        day_x = exposures.xs(date, level="date").reindex(day_weights.index)[exposure_columns]
+        frame = pd.concat([day_weights.rename("weight"), day_x], axis=1).replace([np.inf, -np.inf], np.nan).dropna()
+        adjusted = day_weights.copy()
+        if len(frame) > len(exposure_columns) + 2:
+            design = np.column_stack([np.ones(len(frame)), frame[exposure_columns].to_numpy(dtype=float)])
+            beta, *_ = np.linalg.lstsq(design, frame["weight"].to_numpy(dtype=float), rcond=None)
+            adjusted.loc[frame.index] = frame["weight"] - design @ beta
+        out.append(cap_and_renormalize(adjusted, max_weight=max_weight).rename(date))
+    result = pd.DataFrame(out)
+    result.index.name = "date"
+    return result.sort_index()
+
+
 def sanity_check_weights(weights: pd.DataFrame, max_weight: float, atol: float = 1e-6) -> None:
     """Validate dollar-neutral long-short portfolio constraints."""
 

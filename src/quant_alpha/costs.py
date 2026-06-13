@@ -6,6 +6,20 @@ import numpy as np
 import pandas as pd
 
 
+def load_borrow_costs(path: str) -> pd.DataFrame:
+    """Load optional annualized borrow costs.
+
+    Expected columns: date, ticker, annual_borrow_bps.
+    """
+
+    costs = pd.read_csv(path, parse_dates=["date"])
+    required = {"date", "ticker", "annual_borrow_bps"}
+    missing = required - set(costs.columns)
+    if missing:
+        raise ValueError(f"Borrow cost file missing columns: {sorted(missing)}")
+    return costs.pivot(index="date", columns="ticker", values="annual_borrow_bps").sort_index()
+
+
 def flat_bps_cost(turnover: pd.Series, bps: float) -> pd.Series:
     """Flat basis-point cost applied to one-way turnover."""
 
@@ -16,6 +30,25 @@ def spread_proxy_cost(turnover: pd.Series, spread_bps: pd.Series | float) -> pd.
     """Half-spread proxy cost based on one-way turnover."""
 
     return (turnover.fillna(0.0) * spread_bps / 10_000.0 / 2.0).rename("spread_proxy_cost")
+
+
+def borrow_cost(short_weights: pd.DataFrame, annual_borrow_bps: pd.DataFrame | float) -> pd.Series:
+    """Daily borrow-cost drag for short positions.
+
+    Parameters
+    ----------
+    short_weights:
+        Portfolio weights. Only negative weights are charged.
+    annual_borrow_bps:
+        Annualized borrow cost in bps, either scalar or date x ticker DataFrame.
+    """
+
+    short_notional = short_weights.clip(upper=0.0).abs()
+    if isinstance(annual_borrow_bps, pd.DataFrame):
+        borrow = annual_borrow_bps.reindex_like(short_weights).fillna(0.0)
+    else:
+        borrow = float(annual_borrow_bps)
+    return (short_notional * borrow / 10_000.0 / 252.0).sum(axis=1).rename("borrow_cost")
 
 
 def sqrt_impact_cost(
@@ -74,4 +107,3 @@ def capacity_table(
             }
         )
     return pd.DataFrame(rows)
-

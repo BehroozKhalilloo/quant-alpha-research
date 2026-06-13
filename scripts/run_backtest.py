@@ -12,11 +12,13 @@ sys.path.insert(0, str(ROOT / "src"))
 import pandas as pd
 
 from quant_alpha.backtest import benchmark_returns, run_long_short_backtest
-from quant_alpha.costs import capacity_table
+from quant_alpha.costs import capacity_table, load_borrow_costs
 from quant_alpha.data import load_market_data
-from quant_alpha.factor import factor_regression, proxy_factor_returns
+from quant_alpha.data_quality import apply_point_in_time_universe, load_universe_membership
+from quant_alpha.factor import factor_regression, load_factor_returns, proxy_factor_returns
 from quant_alpha.features import build_features
 from quant_alpha.metrics import performance_summary
+from quant_alpha.neutralization import build_style_exposures
 from quant_alpha.risk import exposure_report
 from quant_alpha.signal import apply_alpha_neutralization, compute_alpha, compute_blended_alpha, naive_reversal_signal
 from quant_alpha.utils import ensure_dir, load_config, setup_logging
@@ -74,6 +76,18 @@ def main() -> None:
         naive_reversal_signal(features, shift_days=config["signal"].get("shift_days", 1)),
         benchmark_ticker,
     )
+    membership_file = data_cfg.get("universe_membership_file")
+    if membership_file:
+        membership = load_universe_membership(str(ROOT / membership_file))
+        signal = apply_point_in_time_universe(signal, membership)
+        naive_signal = apply_point_in_time_universe(naive_signal, membership)
+    portfolio_neutral = config["portfolio"].get("neutralize", {})
+    neutralization_exposures = build_style_exposures(features) if portfolio_neutral.get("enabled", False) else None
+    neutralization_columns = portfolio_neutral.get("columns", []) if portfolio_neutral.get("enabled", False) else None
+    borrow_file = data_cfg.get("borrow_cost_file")
+    annual_borrow_bps = (
+        load_borrow_costs(str(ROOT / borrow_file)) if borrow_file else config["backtest"].get("annual_borrow_bps", 0.0)
+    )
     result = run_long_short_backtest(
         market_data=market_data,
         signal=signal,
@@ -83,6 +97,9 @@ def main() -> None:
         holding_period=config["backtest"].get("holding_period", 1),
         weighting=config["portfolio"].get("weighting", "equal"),
         vol=features["realized_vol_21d"],
+        neutralization_exposures=neutralization_exposures,
+        neutralization_columns=neutralization_columns,
+        annual_borrow_bps=annual_borrow_bps,
     )
     naive = run_long_short_backtest(
         market_data=market_data,
@@ -103,7 +120,13 @@ def main() -> None:
         aum_levels=config.get("capacity", {}).get("aum_levels", [1_000_000, 10_000_000, 50_000_000, 100_000_000]),
         impact_coefficient=config.get("capacity", {}).get("impact_coefficient", 0.10),
     )
-    factor_summary = factor_regression(result["net_returns"], proxy_factor_returns(market_data, benchmark=benchmark_ticker))
+    factor_file = data_cfg.get("factor_returns_file")
+    factor_returns = (
+        load_factor_returns(str(ROOT / factor_file))
+        if factor_file
+        else proxy_factor_returns(market_data, benchmark=benchmark_ticker)
+    )
+    factor_summary = factor_regression(result["net_returns"], factor_returns)
 
     result["weights"].to_csv(processed_dir / "weights.csv")
     pd.concat(
@@ -112,6 +135,7 @@ def main() -> None:
             result["net_returns"],
             result["turnover"],
             result["transaction_costs"],
+            result["borrow_costs"],
             naive["net_returns"].rename("naive_reversal_net_return"),
             benchmark,
         ],

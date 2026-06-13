@@ -113,7 +113,8 @@ Additional research controls now include:
 - purged walk-forward validation;
 - optional style neutralization against beta, size proxy, volatility, momentum, and liquidity;
 - proxy factor regression and hooks for user-supplied factor files;
-- a trader-facing fractional Kelly sizing module.
+- a trader-facing fractional Kelly sizing module and Almgren-Chriss execution schedule.
+- optional borrow-cost file support and scalar borrow-cost fallback.
 
 Forward returns are computed from close at date `t` to close at date `t+h`. The prediction target is configurable through `config/default.yaml`.
 
@@ -258,6 +259,7 @@ data/processed/capacity_summary.csv
 data/processed/purged_walk_forward.csv
 data/processed/factor_regression_proxy.csv
 data/processed/kelly_sizing_scenarios.csv
+data/processed/almgren_chriss_schedule.csv
 data/processed/weights.csv
 reports/generated_report.md
 reports/research_memo.md

@@ -3,6 +3,9 @@ data:
   raw_dir: data/raw
   processed_dir: data/processed
   market_data_file: data/raw/ohlcv.csv
+  universe_membership_file:
+  factor_returns_file:
+  borrow_cost_file:
   benchmark: SPY
   start_date: "2018-01-01"
   end_date:
@@ -92,10 +95,16 @@ validation:
 portfolio:
   weighting: equal
   max_weight: 0.125
+  neutralize:
+    enabled: false
+    columns:
+      - beta
+      - volatility
 
 backtest:
   holding_period: 5
   transaction_cost_bps: 5.0
+  annual_borrow_bps: 0.0
 
 capacity:
   aum_levels:
@@ -117,6 +126,13 @@ trader_extension:
     - 0.5
     - 0.75
     - 1.0
+  execution:
+    shares: 100000
+    intervals: 20
+    volatility: 0.02
+    risk_aversion: 0.000001
+    temporary_impact: 0.0000001
+    permanent_impact: 0.0
 
 report:
   output_file: reports/generated_report.md

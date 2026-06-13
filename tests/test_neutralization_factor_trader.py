@@ -5,7 +5,7 @@ import pandas as pd
 from quant_alpha.factor import factor_regression, proxy_factor_returns
 from quant_alpha.features import build_features
 from quant_alpha.neutralization import build_style_exposures, neutralize_signal
-from quant_alpha.trader import kelly_fraction, kelly_scenario_grid
+from quant_alpha.trader import almgren_chriss_schedule, kelly_fraction, kelly_scenario_grid
 from quant_alpha.validation import evaluate_purged_walk_forward, forward_returns
 from tests.test_features import synthetic_market_data
 
@@ -38,3 +38,12 @@ def test_factor_regression_and_kelly_outputs() -> None:
     assert "coef_market_proxy" in regression.index
     assert kelly_fraction(0.53, 1.1) > 0
     assert len(grid) == 2
+    schedule = almgren_chriss_schedule(
+        shares=100_000,
+        intervals=10,
+        volatility=0.02,
+        risk_aversion=1e-6,
+        temporary_impact=1e-7,
+    )
+    assert abs(schedule["inventory"].iloc[0] - 100_000) < 1e-6
+    assert abs(schedule["inventory"].iloc[-1]) < 1e-6

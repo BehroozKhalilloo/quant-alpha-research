@@ -114,6 +114,7 @@ def main() -> None:
     purged = read_optional_no_index(processed_dir / "purged_walk_forward.csv")
     factor = read_optional(processed_dir / "factor_regression_proxy.csv", parse_dates=False)
     kelly = read_optional_no_index(processed_dir / "kelly_sizing_scenarios.csv")
+    execution = read_optional_no_index(processed_dir / "almgren_chriss_schedule.csv")
 
     figure_lines: list[str] = []
     if returns is not None and "net_return" in returns:
@@ -239,6 +240,10 @@ def main() -> None:
                 "## Trader Extension: Kelly Sizing",
                 "",
                 markdown_table(kelly.set_index("fractional_kelly") if kelly is not None and "fractional_kelly" in kelly else kelly),
+                "",
+                "## Trader Extension: Almgren-Chriss Execution",
+                "",
+                markdown_table(execution.head(10) if execution is not None else execution),
                 "",
                 "## Bootstrap Confidence Intervals",
                 "",

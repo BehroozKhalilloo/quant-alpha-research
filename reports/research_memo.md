@@ -87,4 +87,4 @@ Flat bps cost sensitivity is shown alongside square-root impact capacity estimat
 
 ## Trader-Facing Extension
 
-The repository includes a fractional Kelly sizing scenario module. It is intentionally separate from the daily alpha backtest and demonstrates expected-value reasoning, position sizing, risk of loss, and drawdown trade-offs for a stylized edge.
+The repository includes fractional Kelly sizing and a simplified Almgren-Chriss execution schedule. These are intentionally separate from the daily alpha backtest and demonstrate expected-value reasoning, position sizing, risk of loss, inventory liquidation, and execution cost trade-offs for stylized trading problems.

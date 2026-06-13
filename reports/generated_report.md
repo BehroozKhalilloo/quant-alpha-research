@@ -191,6 +191,21 @@ This report is generated from local research artifacts. It intentionally does no
 | 0.75 | 0.072619 | 0.0544643 | 0.435769 | 1.8596 | 7.93564 | 0.2252 | -0.522414 | -0.771567 |
 | 1.0 | 0.072619 | 0.072619 | 0.277334 | 1.92096 | 13.3056 | 0.2634 | -0.646273 | -0.873925 |
 
+## Trader Extension: Almgren-Chriss Execution
+
+| metric | interval | inventory | trade | temporary_cost | permanent_cost | risk_penalty | total_objective_cost |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | 0 | 100000 | 0 | 0 | 0 | 4 | 4 |
+| 1 | 1 | 92775.5 | 7224.48 | 5.21931 | 0 | 3.44292 | 8.66223 |
+| 2 | 2 | 85922.3 | 6853.25 | 4.6967 | 0 | 2.95305 | 7.64976 |
+| 3 | 3 | 79412.8 | 6509.45 | 4.23729 | 0 | 2.52256 | 6.75985 |
+| 4 | 4 | 73221.1 | 6191.69 | 3.8337 | 0 | 2.14453 | 5.97824 |
+| 5 | 5 | 67322.4 | 5898.71 | 3.47948 | 0 | 1.81292 | 5.2924 |
+| 6 | 6 | 61693.1 | 5629.33 | 3.16893 | 0 | 1.52242 | 4.69135 |
+| 7 | 7 | 56310.6 | 5382.47 | 2.8971 | 0 | 1.26835 | 4.16546 |
+| 8 | 8 | 51153.5 | 5157.16 | 2.65963 | 0 | 1.04667 | 3.7063 |
+| 9 | 9 | 46201 | 4952.47 | 2.4527 | 0 | 0.853813 | 3.30651 |
+
 ## Bootstrap Confidence Intervals
 
 | metric | p05 | median | p95 |
@@ -203,7 +218,7 @@ This report is generated from local research artifacts. It intentionally does no
 
 | metric | rows_flagged | columns |
 | --- | --- | --- |
-| missing_by_ticker | 50 | volume,close,high,low,open,adj_close |
+| missing_by_ticker | 50 | open,low,adj_close,high,close,volume |
 | nonpositive_prices | 0 | open,high,low,close,adj_close |
 | negative_volume | 0 | volume |
 | stale_prices | 0 | is_stale |

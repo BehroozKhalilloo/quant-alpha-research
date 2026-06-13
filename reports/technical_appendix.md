@@ -26,3 +26,6 @@ This is not an execution simulator. It is a conservative sanity check.
 
 The free-data version includes a proxy factor regression using SPY, mega-cap basket returns, and cross-sectional dispersion. Users can provide external Fama-French, q-factor, or proprietary factor files for stronger attribution.
 
+## Trader Extension
+
+The Kelly module evaluates fractional bet sizing under a stylized binary edge. The Almgren-Chriss module computes a simplified execution schedule that trades off temporary impact and inventory risk. Both are scenario tools, not exchange simulators.
