@@ -100,6 +100,15 @@ The shifted signal is used for validation and backtesting to reduce look-ahead r
 - largest drawdown events;
 - performance by simple market and volatility regimes.
 
+Additional research controls now include:
+
+- data quality checks for missing fields, nonpositive prices, zero volume, stale prices, and extreme returns;
+- Newey-West autocorrelation-robust IC inference;
+- false-discovery-aware candidate reporting;
+- sleeve ablation tests;
+- parameter sensitivity across signal definitions, liquidity thresholds, and volatility scaling;
+- capacity estimates using ADV participation and a square-root impact proxy.
+
 Forward returns are computed from close at date `t` to close at date `t+h`. The prediction target is configurable through `config/default.yaml`.
 
 ## Backtest Assumptions
@@ -231,8 +240,16 @@ data/processed/rolling_performance.csv
 data/processed/monthly_returns.csv
 data/processed/regime_summary.csv
 data/processed/drawdown_events.csv
+data/processed/data_quality_summary.csv
+data/processed/newey_west_ic_summary.csv
+data/processed/false_discovery_report.csv
+data/processed/candidate_false_discovery.csv
+data/processed/sleeve_ablation.csv
+data/processed/parameter_sensitivity.csv
+data/processed/capacity_summary.csv
 data/processed/weights.csv
 reports/generated_report.md
+reports/research_memo.md
 reports/figures/*.png
 ```
 
@@ -258,6 +275,8 @@ Edit `config/default.yaml` to change:
 ## Limitations
 
 This is a research repo. It is suitable for demonstrating a disciplined research process, but it is not production portfolio infrastructure. Before relying on any result, a researcher should use point-in-time data, survivorship-bias-free universes, robust corporate action checks, realistic financing and borrow assumptions, and stronger out-of-sample validation.
+
+The included capacity analysis is deliberately conservative. Under the square-root impact proxy, the strategy is capacity-limited unless execution assumptions, universe breadth, or turnover controls improve. This is a feature of the research process, not a hidden footnote.
 
 ## Future Improvements
 

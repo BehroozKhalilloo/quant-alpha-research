@@ -10,10 +10,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 import pandas as pd
+from scipy import stats
 
 from quant_alpha.data import load_market_data
+from quant_alpha.data_quality import summarize_quality_report, validate_market_data
 from quant_alpha.features import build_features
 from quant_alpha.signal import compute_alpha, compute_blended_alpha, naive_reversal_signal
+from quant_alpha.stats import false_discovery_report, newey_west_mean_test
 from quant_alpha.utils import ensure_dir, load_config, setup_logging
 from quant_alpha.validation import (
     forward_returns,
@@ -66,6 +69,8 @@ def main() -> None:
         raise FileNotFoundError(f"Market data not found at {data_file}. Run python scripts/download_data.py first.")
 
     market_data = load_market_data(data_file)
+    quality_reports = validate_market_data(market_data)
+    summarize_quality_report(quality_reports).to_csv(processed_dir / "data_quality_summary.csv", index=False)
     features = build_features(
         market_data,
         benchmark=data_cfg.get("benchmark", "SPY"),
@@ -85,14 +90,28 @@ def main() -> None:
     ic_pearson = information_coefficient(signal, target, method="pearson")
     ic_spearman = information_coefficient(signal, target, method="spearman")
     ic_summary = pearson_spearman_summary(signal, target)
+    nw_ic = pd.DataFrame(
+        {
+            "pearson": newey_west_mean_test(ic_pearson, lags=horizon),
+            "spearman": newey_west_mean_test(ic_spearman, lags=horizon),
+        }
+    ).T
     ic_year = rank_ic_by_year(signal, target)
     deciles = quantile_forward_returns(signal, target, quantiles=validation_cfg.get("quantiles", 10))
     naive_ic_summary = pearson_spearman_summary(naive, target)
+    candidate_p_values = pd.Series(
+        {
+            "pearson_ic": 2.0 * (1.0 - stats.norm.cdf(abs(ic_summary.loc["pearson", "t_stat"]))),
+            "spearman_ic": 2.0 * (1.0 - stats.norm.cdf(abs(ic_summary.loc["spearman", "t_stat"]))),
+        }
+    )
+    false_discovery_report(candidate_p_values).to_csv(processed_dir / "false_discovery_report.csv")
 
     features.to_csv(processed_dir / "features.csv")
     alpha.to_csv(processed_dir / "alpha.csv")
     pd.concat([ic_pearson, ic_spearman], axis=1).to_csv(processed_dir / "ic_series.csv")
     ic_summary.to_csv(processed_dir / "ic_summary.csv")
+    nw_ic.to_csv(processed_dir / "newey_west_ic_summary.csv")
     ic_year.to_csv(processed_dir / "rank_ic_by_year.csv")
     deciles.to_csv(processed_dir / "decile_forward_returns.csv")
     naive_ic_summary.to_csv(processed_dir / "naive_reversal_ic_summary.csv")

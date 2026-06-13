@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 import pandas as pd
 
 from quant_alpha.backtest import benchmark_returns, run_long_short_backtest
+from quant_alpha.costs import capacity_table
 from quant_alpha.data import load_market_data
 from quant_alpha.features import build_features
 from quant_alpha.metrics import performance_summary
@@ -88,6 +89,14 @@ def main() -> None:
     )
     benchmark = benchmark_returns(market_data, benchmark=benchmark_ticker)
     risk = exposure_report(result["weights"], beta=features["market_beta"])
+    dollar_volume = features["dollar_volume"].unstack("ticker")
+    capacity = capacity_table(
+        weights=result["weights"],
+        dollar_volume=dollar_volume,
+        gross_returns=result["gross_returns"],
+        aum_levels=config.get("capacity", {}).get("aum_levels", [1_000_000, 10_000_000, 50_000_000, 100_000_000]),
+        impact_coefficient=config.get("capacity", {}).get("impact_coefficient", 0.10),
+    )
 
     result["weights"].to_csv(processed_dir / "weights.csv")
     pd.concat(
@@ -102,6 +111,7 @@ def main() -> None:
         axis=1,
     ).to_csv(processed_dir / "backtest_returns.csv")
     result["summary"].to_csv(processed_dir / "backtest_summary.csv")
+    capacity.to_csv(processed_dir / "capacity_summary.csv", index=False)
     performance_summary(naive["net_returns"]).to_csv(processed_dir / "naive_reversal_backtest_summary.csv")
     for name, value in risk.items():
         value.to_csv(processed_dir / f"{name}.csv")

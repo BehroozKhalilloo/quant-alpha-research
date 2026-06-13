@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from scipy import stats
 
 
 def forward_returns(prices: pd.DataFrame, horizon: int = 1) -> pd.Series:

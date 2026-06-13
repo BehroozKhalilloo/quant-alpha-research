@@ -9,7 +9,6 @@ from typing import Any
 
 import yaml
 
-
 LOGGER_NAME = "quant_alpha"
 
 

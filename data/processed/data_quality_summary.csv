@@ -1,0 +1,8 @@
+check,rows_flagged,columns
+missing_by_ticker,50,"low,open,volume,high,close,adj_close"
+nonpositive_prices,0,"open,high,low,close,adj_close"
+negative_volume,0,volume
+stale_prices,0,is_stale
+extreme_returns,2,return
+zero_volume,0,zero_volume
+daily_coverage,2123,coverage

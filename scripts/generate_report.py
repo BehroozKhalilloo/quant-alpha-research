@@ -3,14 +3,17 @@
 
 from __future__ import annotations
 
+import json
+import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from quant_alpha.plotting import (
     plot_beta_exposure,
@@ -101,6 +104,13 @@ def main() -> None:
     regime = read_optional_no_index(processed_dir / "regime_summary.csv")
     drawdowns = read_optional_no_index(processed_dir / "drawdown_events.csv")
     rolling = read_optional(processed_dir / "rolling_performance.csv")
+    capacity = read_optional_no_index(processed_dir / "capacity_summary.csv")
+    data_quality = read_optional_no_index(processed_dir / "data_quality_summary.csv")
+    newey_west = read_optional(processed_dir / "newey_west_ic_summary.csv", parse_dates=False)
+    fdr = read_optional(processed_dir / "candidate_false_discovery.csv", parse_dates=False)
+    ablation = read_optional_no_index(processed_dir / "sleeve_ablation.csv")
+    sensitivity = read_optional_no_index(processed_dir / "parameter_sensitivity.csv")
+    walk_forward = read_optional_no_index(processed_dir / "walk_forward_yearly_ic.csv")
 
     figure_lines: list[str] = []
     if returns is not None and "net_return" in returns:
@@ -175,6 +185,10 @@ def main() -> None:
                 "",
                 markdown_table(ic_summary),
                 "",
+                "## Newey-West IC Inference",
+                "",
+                markdown_table(newey_west),
+                "",
                 "## Backtest Summary",
                 "",
                 markdown_table(backtest_summary),
@@ -187,13 +201,37 @@ def main() -> None:
                 "",
                 markdown_table(robustness.set_index("candidate") if robustness is not None and "candidate" in robustness else robustness),
                 "",
+                "## Sleeve Ablation",
+                "",
+                markdown_table(ablation.set_index("candidate") if ablation is not None and "candidate" in ablation else ablation),
+                "",
+                "## Walk-Forward Yearly IC",
+                "",
+                markdown_table(walk_forward.set_index("year") if walk_forward is not None and "year" in walk_forward else walk_forward),
+                "",
+                "## Parameter Sensitivity",
+                "",
+                markdown_table(sensitivity.head(20) if sensitivity is not None else sensitivity),
+                "",
+                "## False Discovery Report",
+                "",
+                markdown_table(fdr),
+                "",
                 "## Transaction Cost Sensitivity",
                 "",
                 markdown_table(cost_sensitivity),
                 "",
+                "## Capacity Analysis",
+                "",
+                markdown_table(capacity.set_index("aum") if capacity is not None and "aum" in capacity else capacity),
+                "",
                 "## Bootstrap Confidence Intervals",
                 "",
                 markdown_table(bootstrap),
+                "",
+                "## Data Quality Summary",
+                "",
+                markdown_table(data_quality.set_index("check") if data_quality is not None and "check" in data_quality else data_quality),
                 "",
                 "## Regime Summary",
                 "",
@@ -215,6 +253,24 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
+    manifest = {
+        "generated_at_utc": datetime.now(UTC).isoformat(),
+        "git_commit": subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip(),
+        "config": config,
+        "artifacts": sorted(
+            str(path.relative_to(ROOT))
+            for path in processed_dir.glob("*.csv")
+        )
+        + sorted(str(path.relative_to(ROOT)) for path in figures_dir.glob("*.png"))
+        + [str(output_file.relative_to(ROOT))],
+    }
+    (ROOT / "reports/result_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print(f"Wrote report to {output_file}")
 
 

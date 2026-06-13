@@ -91,6 +91,14 @@ backtest:
   holding_period: 5
   transaction_cost_bps: 5.0
 
+capacity:
+  aum_levels:
+    - 1000000
+    - 10000000
+    - 50000000
+    - 100000000
+  impact_coefficient: 0.10
+
 robustness:
   split_date: "2022-01-01"
 

@@ -1,0 +1,164 @@
+{
+  "generated_at_utc": "2026-06-13T18:58:55.646331+00:00",
+  "git_commit": "cd5583af3ade4d76142612df4e3e1ee401e47d21",
+  "config": {
+    "data": {
+      "provider": "yfinance",
+      "raw_dir": "data/raw",
+      "processed_dir": "data/processed",
+      "market_data_file": "data/raw/ohlcv.csv",
+      "benchmark": "SPY",
+      "start_date": "2018-01-01",
+      "end_date": null,
+      "tickers": [
+        "AAPL",
+        "MSFT",
+        "NVDA",
+        "AMZN",
+        "META",
+        "GOOGL",
+        "GOOG",
+        "BRK-B",
+        "AVGO",
+        "JPM",
+        "LLY",
+        "V",
+        "XOM",
+        "UNH",
+        "MA",
+        "COST",
+        "PG",
+        "HD",
+        "NFLX",
+        "JNJ",
+        "BAC",
+        "ABBV",
+        "CRM",
+        "KO",
+        "MRK",
+        "CVX",
+        "WMT",
+        "AMD",
+        "PEP",
+        "ORCL",
+        "TMO",
+        "LIN",
+        "MCD",
+        "CSCO",
+        "ACN",
+        "ABT",
+        "DIS",
+        "GE",
+        "IBM",
+        "INTU",
+        "VZ",
+        "QCOM",
+        "CAT",
+        "TXN",
+        "AMGN",
+        "PM",
+        "NOW",
+        "ISRG",
+        "NKE",
+        "SPY"
+      ]
+    },
+    "features": {
+      "beta_window": 60,
+      "vol_window": 21,
+      "liquidity_window": 60,
+      "volume_window": 20
+    },
+    "signal": {
+      "mode": "blend",
+      "sleeves": {
+        "reversal_5d": 0.8,
+        "residual_reversal_1d": 0.1,
+        "momentum_21d": 0.05,
+        "quality_proxy": 0.05
+      },
+      "base_feature": "return_5d",
+      "direction": "reversal",
+      "vol_adjust": false,
+      "liquidity_threshold": 0.0,
+      "winsor_lower": 0.01,
+      "winsor_upper": 0.99,
+      "shift_days": 1
+    },
+    "validation": {
+      "forward_horizon": 5,
+      "quantiles": 10
+    },
+    "portfolio": {
+      "weighting": "equal",
+      "max_weight": 0.125
+    },
+    "backtest": {
+      "holding_period": 5,
+      "transaction_cost_bps": 5.0
+    },
+    "capacity": {
+      "aum_levels": [
+        1000000,
+        10000000,
+        50000000,
+        100000000
+      ],
+      "impact_coefficient": 0.1
+    },
+    "robustness": {
+      "split_date": "2022-01-01"
+    },
+    "report": {
+      "output_file": "reports/generated_report.md",
+      "figures_dir": "reports/figures"
+    },
+    "logging": {
+      "level": "INFO"
+    }
+  },
+  "artifacts": [
+    "data/processed/alpha.csv",
+    "data/processed/backtest_returns.csv",
+    "data/processed/backtest_summary.csv",
+    "data/processed/beta_exposure.csv",
+    "data/processed/bootstrap_summary.csv",
+    "data/processed/candidate_false_discovery.csv",
+    "data/processed/capacity_summary.csv",
+    "data/processed/concentration.csv",
+    "data/processed/cost_sensitivity.csv",
+    "data/processed/data_quality_summary.csv",
+    "data/processed/decile_forward_returns.csv",
+    "data/processed/drawdown_events.csv",
+    "data/processed/false_discovery_report.csv",
+    "data/processed/features.csv",
+    "data/processed/gross_exposure.csv",
+    "data/processed/ic_series.csv",
+    "data/processed/ic_summary.csv",
+    "data/processed/monthly_returns.csv",
+    "data/processed/naive_reversal_backtest_summary.csv",
+    "data/processed/naive_reversal_ic_summary.csv",
+    "data/processed/net_exposure.csv",
+    "data/processed/newey_west_ic_summary.csv",
+    "data/processed/parameter_sensitivity.csv",
+    "data/processed/rank_ic_by_year.csv",
+    "data/processed/regime_summary.csv",
+    "data/processed/robustness_candidates.csv",
+    "data/processed/rolling_performance.csv",
+    "data/processed/sleeve_ablation.csv",
+    "data/processed/walk_forward_yearly_ic.csv",
+    "data/processed/weights.csv",
+    "reports/figures/beta_exposure.png",
+    "reports/figures/candidate_sharpe.png",
+    "reports/figures/cost_sensitivity.png",
+    "reports/figures/cumulative_returns.png",
+    "reports/figures/decile_forward_returns.png",
+    "reports/figures/drawdown.png",
+    "reports/figures/ic_by_year.png",
+    "reports/figures/ic_time_series.png",
+    "reports/figures/rolling_126d_sharpe.png",
+    "reports/figures/rolling_sharpe.png",
+    "reports/figures/turnover.png",
+    "reports/generated_report.md"
+  ]
+}

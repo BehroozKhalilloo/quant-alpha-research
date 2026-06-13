@@ -16,6 +16,7 @@ from quant_alpha.backtest import run_long_short_backtest
 from quant_alpha.data import load_market_data
 from quant_alpha.features import build_features
 from quant_alpha.signal import compute_alpha, compute_blended_alpha
+from quant_alpha.stats import false_discovery_report, newey_west_mean_test
 from quant_alpha.utils import ensure_dir, load_config, setup_logging
 from quant_alpha.validation import forward_returns, information_coefficient
 
@@ -188,6 +189,14 @@ def main() -> None:
         for candidate in candidates
     ]
     pd.DataFrame(rows).to_csv(processed_dir / "robustness_candidates.csv", index=False)
+    p_values = {}
+    for row in rows:
+        t_stat = row["test_rank_ic_t"]
+        if pd.notna(t_stat):
+            from scipy import stats
+
+            p_values[row["candidate"]] = 2.0 * (1.0 - stats.norm.cdf(abs(t_stat)))
+    false_discovery_report(pd.Series(p_values)).to_csv(processed_dir / "candidate_false_discovery.csv")
 
     cost_rows = []
     default = candidates[0]
@@ -206,6 +215,76 @@ def main() -> None:
         row["transaction_cost_bps"] = bps
         cost_rows.append(row)
     pd.DataFrame(cost_rows).set_index("transaction_cost_bps").to_csv(processed_dir / "cost_sensitivity.csv")
+
+    ablation_rows = []
+    base_sleeves = config["signal"]["sleeves"]
+    ablation_specs = {"full_blend": base_sleeves}
+    for sleeve in base_sleeves:
+        remaining = {name: weight for name, weight in base_sleeves.items() if name != sleeve}
+        total = sum(remaining.values())
+        ablation_specs[f"minus_{sleeve}"] = {name: weight / total for name, weight in remaining.items()}
+    for name, sleeves in ablation_specs.items():
+        ablation_rows.append(
+            evaluate_candidate(
+                name=name,
+                market_data=market_data,
+                features=features,
+                benchmark=benchmark,
+                split_date=split_date,
+                quantiles=quantiles,
+                max_weight=max_weight,
+                transaction_cost_bps=transaction_cost_bps,
+                base_feature="blend",
+                direction="blend",
+                vol_adjust=False,
+                liquidity_threshold=0.0,
+                horizon=5,
+                holding_period=5,
+                sleeves=sleeves,
+            )
+        )
+    pd.DataFrame(ablation_rows).to_csv(processed_dir / "sleeve_ablation.csv", index=False)
+
+    target = exclude_ticker(forward_returns(market_data, horizon=5), benchmark)
+    signal = exclude_ticker(compute_blended_alpha(features, sleeves=base_sleeves)["alpha_shifted"], benchmark)
+    ic = information_coefficient(signal, target, method="spearman")
+    walk_rows = []
+    for year, year_ic in ic.groupby(ic.index.year):
+        nw = newey_west_mean_test(year_ic, lags=5)
+        walk_rows.append({"year": year, "rank_ic": year_ic.mean(), "nw_t_stat": nw["nw_t_stat"], "count": year_ic.count()})
+    pd.DataFrame(walk_rows).to_csv(processed_dir / "walk_forward_yearly_ic.csv", index=False)
+
+    sensitivity_rows = []
+    for base_feature in ["return_1d", "return_5d", "momentum_21d", "residual_1d_return"]:
+        for direction in ["reversal", "momentum"]:
+            if base_feature == "momentum_21d" and direction == "reversal":
+                continue
+            if base_feature != "momentum_21d" and direction == "momentum":
+                continue
+            for liquidity_threshold in [0.0, 0.4, 0.6]:
+                for vol_adjust in [False, True]:
+                    alpha = compute_alpha(
+                        features,
+                        base_feature=base_feature,
+                        direction=direction,
+                        vol_adjust=vol_adjust,
+                        liquidity_threshold=liquidity_threshold,
+                    )
+                    sig = exclude_ticker(alpha["alpha_shifted"], benchmark)
+                    ic_series = information_coefficient(sig, target, method="spearman")
+                    stats_row = newey_west_mean_test(ic_series, lags=5)
+                    sensitivity_rows.append(
+                        {
+                            "base_feature": base_feature,
+                            "direction": direction,
+                            "liquidity_threshold": liquidity_threshold,
+                            "vol_adjust": vol_adjust,
+                            "rank_ic": ic_series.mean(),
+                            "nw_t_stat": stats_row["nw_t_stat"],
+                            "count": stats_row["count"],
+                        }
+                    )
+    pd.DataFrame(sensitivity_rows).to_csv(processed_dir / "parameter_sensitivity.csv", index=False)
     print(f"Wrote robustness artifacts to {processed_dir}")
 
 

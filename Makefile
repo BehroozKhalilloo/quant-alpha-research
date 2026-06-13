@@ -1,4 +1,4 @@
-.PHONY: install test data research backtest robustness diagnostics report
+.PHONY: install test data research backtest robustness diagnostics report all
 
 install:
 	python -m pip install -e ".[dev]"
@@ -23,3 +23,5 @@ diagnostics:
 
 report:
 	python scripts/generate_report.py
+
+all: data research backtest robustness diagnostics report test
