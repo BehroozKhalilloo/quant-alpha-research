@@ -65,6 +65,12 @@ features:
   volume_window: 20
 
 signal:
+  mode: blend
+  sleeves:
+    reversal_5d: 0.80
+    residual_reversal_1d: 0.10
+    momentum_21d: 0.05
+    quality_proxy: 0.05
   base_feature: return_5d
   direction: reversal
   vol_adjust: false

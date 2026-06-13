@@ -43,7 +43,9 @@ def markdown_table(frame: pd.DataFrame | None) -> str:
     if frame is None or frame.empty:
         return "Not generated."
     display = frame.copy()
-    display = display.map(lambda x: f"{x:.6g}" if isinstance(x, float) else x)
+    display = display.map(
+        lambda x: "" if pd.isna(x) else f"{x:.6g}" if isinstance(x, float) else x
+    )
     headers = ["metric", *map(str, display.columns)]
     lines = [
         "| " + " | ".join(headers) + " |",
@@ -178,7 +180,7 @@ def main() -> None:
                 "",
                 "## Interpretation",
                 "",
-                "The selected five-day reversal candidate has positive in-sample and post-2022 rank IC, outperforms the naive one-day reversal baseline, and remains positive under moderate transaction-cost assumptions. The evidence is encouraging but not conclusive: performance is cost-sensitive, drawdowns are material, and the default universe is not point-in-time.",
+                "The selected multi-sleeve blend has positive full-sample IC, positive pre/post split rank IC, stronger Sharpe and drawdown than the pure reversal sleeve, and remains positive across the displayed transaction-cost stress range. The evidence is stronger than the single-sleeve baseline, but it is still research evidence: the default universe is not point-in-time, the quality sleeve is a price/volume proxy rather than a fundamental factor, and live implementation details are intentionally out of scope.",
                 "",
                 "## Disclaimer",
                 "",

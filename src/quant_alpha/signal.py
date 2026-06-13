@@ -75,6 +75,53 @@ def compute_alpha(
     return out
 
 
+def compute_sleeve(features: pd.DataFrame, sleeve: str) -> pd.Series:
+    """Compute a named cross-sectional sleeve before final blending.
+
+    The quality sleeve is a price/volume-based defensive quality proxy because
+    the default data source does not include point-in-time fundamentals.
+    """
+
+    if sleeve == "reversal_5d":
+        return -cross_sectional_zscore(features["return_5d"])
+    if sleeve == "residual_reversal_1d":
+        return -cross_sectional_zscore(features["residual_1d_return"])
+    if sleeve == "momentum_21d":
+        return cross_sectional_zscore(features["momentum_21d"])
+    if sleeve == "quality_proxy":
+        low_vol = -cross_sectional_zscore(features["realized_vol_21d"])
+        liquidity = cross_sectional_zscore(features["liquidity_rank"])
+        volume_stability = -cross_sectional_zscore((features["volume_shock"] - 1.0).abs())
+        return cross_sectional_zscore(0.5 * low_vol + 0.3 * liquidity + 0.2 * volume_stability)
+    raise ValueError(f"Unsupported sleeve: {sleeve}")
+
+
+def compute_blended_alpha(
+    features: pd.DataFrame,
+    sleeves: dict[str, float],
+    winsor_lower: float = 0.01,
+    winsor_upper: float = 0.99,
+    shift_days: int = 1,
+) -> pd.DataFrame:
+    """Blend pre-specified sleeve signals into a tradable alpha signal."""
+
+    if not sleeves:
+        raise ValueError("sleeves must not be empty")
+    weight_sum = sum(abs(weight) for weight in sleeves.values())
+    if weight_sum == 0:
+        raise ValueError("sleeve weights must not all be zero")
+
+    blended = sum(float(weight) * compute_sleeve(features, sleeve) for sleeve, weight in sleeves.items())
+    alpha = cross_sectional_winsorize(blended.replace([np.inf, -np.inf], np.nan), winsor_lower, winsor_upper)
+    alpha = cross_sectional_zscore(alpha)
+    shifted = alpha.groupby(level="ticker").shift(shift_days)
+    out = pd.DataFrame({"alpha": alpha, "alpha_shifted": shifted})
+    for sleeve, weight in sleeves.items():
+        out[f"sleeve_{sleeve}"] = compute_sleeve(features, sleeve) * float(weight)
+    LOGGER.info("Computed blended alpha with shape %s", out.shape)
+    return out
+
+
 def naive_reversal_signal(features: pd.DataFrame, shift_days: int = 1) -> pd.Series:
     """Simple cross-sectional one-day reversal baseline."""
 

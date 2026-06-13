@@ -2,7 +2,7 @@
 
 ## Abstract
 
-This memo studies a daily cross-sectional equity signal that looks for short-term mean reversion after unusually negative returns, conditional on sufficient liquidity and controlled portfolio construction. The project is structured as a reproducible research pipeline rather than a trading system.
+This memo studies a daily cross-sectional equity signal that blends short-term mean reversion, residual reversal, momentum, and a defensive price/volume quality proxy. The project is structured as a reproducible research pipeline rather than a trading system.
 
 ## Hypothesis
 
@@ -16,7 +16,7 @@ The analysis should be read with standard caveats: the default ticker list is no
 
 ## Signal Construction
 
-For each stock and date, the pipeline computes one-day return, five-day return, 21-day momentum, 21-day realized volatility, dollar volume, liquidity rank, volume shock, rolling market beta versus SPY, and residual one-day return. The default alpha starts from negative cross-sectional five-day return, applies liquidity eligibility, winsorizes cross-sectionally, z-scores by date, and shifts the signal forward one trading day before validation or backtesting. The original one-day residual reversal with volatility adjustment remains available as a configurable specification.
+For each stock and date, the pipeline computes one-day return, five-day return, 21-day momentum, 21-day realized volatility, dollar volume, liquidity rank, volume shock, rolling market beta versus SPY, and residual one-day return. The default alpha is a fixed blend of five-day reversal, residual one-day reversal, 21-day momentum, and a defensive price/volume quality proxy. The blended score is winsorized cross-sectionally, z-scored by date, and shifted forward one trading day before validation or backtesting. The original one-day residual reversal with volatility adjustment remains available as a configurable specification.
 
 ## Validation Results Placeholder
 

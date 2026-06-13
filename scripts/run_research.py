@@ -13,7 +13,7 @@ import pandas as pd
 
 from quant_alpha.data import load_market_data
 from quant_alpha.features import build_features
-from quant_alpha.signal import compute_alpha, naive_reversal_signal
+from quant_alpha.signal import compute_alpha, compute_blended_alpha, naive_reversal_signal
 from quant_alpha.utils import ensure_dir, load_config, setup_logging
 from quant_alpha.validation import (
     forward_returns,
@@ -28,6 +28,29 @@ def exclude_ticker(series: pd.Series, ticker: str) -> pd.Series:
     """Remove a ticker from a MultiIndex Series."""
 
     return series[series.index.get_level_values("ticker") != ticker]
+
+
+def build_alpha(features: pd.DataFrame, signal_cfg: dict) -> pd.DataFrame:
+    """Build single-sleeve or blended alpha from config."""
+
+    if signal_cfg.get("mode", "single") == "blend":
+        return compute_blended_alpha(
+            features,
+            sleeves=signal_cfg["sleeves"],
+            winsor_lower=signal_cfg.get("winsor_lower", 0.01),
+            winsor_upper=signal_cfg.get("winsor_upper", 0.99),
+            shift_days=signal_cfg.get("shift_days", 1),
+        )
+    return compute_alpha(
+        features,
+        base_feature=signal_cfg.get("base_feature", "residual_1d_return"),
+        direction=signal_cfg.get("direction", "reversal"),
+        vol_adjust=signal_cfg.get("vol_adjust", True),
+        liquidity_threshold=signal_cfg.get("liquidity_threshold", 0.4),
+        winsor_lower=signal_cfg.get("winsor_lower", 0.01),
+        winsor_upper=signal_cfg.get("winsor_upper", 0.99),
+        shift_days=signal_cfg.get("shift_days", 1),
+    )
 
 
 def main() -> None:
@@ -51,13 +74,7 @@ def main() -> None:
         liquidity_window=feature_cfg.get("liquidity_window", 60),
         volume_window=feature_cfg.get("volume_window", 20),
     )
-    alpha = compute_alpha(
-        features,
-        liquidity_threshold=signal_cfg.get("liquidity_threshold", 0.4),
-        winsor_lower=signal_cfg.get("winsor_lower", 0.01),
-        winsor_upper=signal_cfg.get("winsor_upper", 0.99),
-        shift_days=signal_cfg.get("shift_days", 1),
-    )
+    alpha = build_alpha(features, signal_cfg)
     horizon = validation_cfg.get("forward_horizon", 1)
     target = forward_returns(market_data, horizon=horizon)
     benchmark = data_cfg.get("benchmark", "SPY")

@@ -15,7 +15,7 @@ import pandas as pd
 from quant_alpha.backtest import run_long_short_backtest
 from quant_alpha.data import load_market_data
 from quant_alpha.features import build_features
-from quant_alpha.signal import compute_alpha
+from quant_alpha.signal import compute_alpha, compute_blended_alpha
 from quant_alpha.utils import ensure_dir, load_config, setup_logging
 from quant_alpha.validation import forward_returns, information_coefficient
 
@@ -52,16 +52,20 @@ def evaluate_candidate(
     liquidity_threshold: float,
     horizon: int,
     holding_period: int,
+    sleeves: dict[str, float] | None = None,
 ) -> dict[str, float | str]:
     """Evaluate a single signal candidate with split IC and backtest metrics."""
 
-    alpha = compute_alpha(
-        features,
-        base_feature=base_feature,
-        direction=direction,
-        vol_adjust=vol_adjust,
-        liquidity_threshold=liquidity_threshold,
-    )
+    if sleeves:
+        alpha = compute_blended_alpha(features, sleeves=sleeves)
+    else:
+        alpha = compute_alpha(
+            features,
+            base_feature=base_feature,
+            direction=direction,
+            vol_adjust=vol_adjust,
+            liquidity_threshold=liquidity_threshold,
+        )
     signal = exclude_ticker(alpha["alpha_shifted"], benchmark)
     target = exclude_ticker(forward_returns(market_data, horizon=horizon), benchmark)
     ic = information_coefficient(signal, target, method="spearman")
@@ -88,6 +92,7 @@ def evaluate_candidate(
         "liquidity_threshold": liquidity_threshold,
         "horizon": horizon,
         "holding_period": holding_period,
+        "sleeves": str(sleeves) if sleeves else "",
         "train_rank_ic": train_stats["mean"],
         "train_rank_ic_t": train_stats["t_stat"],
         "test_rank_ic": test_stats["mean"],
@@ -118,6 +123,16 @@ def main() -> None:
 
     candidates = [
         {
+            "name": "multi_sleeve_blend",
+            "base_feature": "blend",
+            "direction": "blend",
+            "vol_adjust": False,
+            "liquidity_threshold": 0.0,
+            "horizon": 5,
+            "holding_period": 5,
+            "sleeves": config["signal"]["sleeves"],
+        },
+        {
             "name": "default_5d_reversal",
             "base_feature": "return_5d",
             "direction": "reversal",
@@ -125,6 +140,7 @@ def main() -> None:
             "liquidity_threshold": 0.0,
             "horizon": 5,
             "holding_period": 5,
+            "sleeves": None,
         },
         {
             "name": "one_day_reversal",
@@ -134,6 +150,7 @@ def main() -> None:
             "liquidity_threshold": 0.0,
             "horizon": 1,
             "holding_period": 1,
+            "sleeves": None,
         },
         {
             "name": "residual_1d_vol_adjusted",
@@ -143,6 +160,7 @@ def main() -> None:
             "liquidity_threshold": 0.4,
             "horizon": 1,
             "holding_period": 1,
+            "sleeves": None,
         },
         {
             "name": "twenty_one_day_momentum",
@@ -152,6 +170,7 @@ def main() -> None:
             "liquidity_threshold": 0.0,
             "horizon": 5,
             "holding_period": 5,
+            "sleeves": None,
         },
     ]
 
@@ -172,13 +191,7 @@ def main() -> None:
 
     cost_rows = []
     default = candidates[0]
-    alpha = compute_alpha(
-        features,
-        base_feature=default["base_feature"],
-        direction=default["direction"],
-        vol_adjust=default["vol_adjust"],
-        liquidity_threshold=default["liquidity_threshold"],
-    )
+    alpha = compute_blended_alpha(features, sleeves=default["sleeves"])
     signal = exclude_ticker(alpha["alpha_shifted"], benchmark)
     for bps in [0.0, 2.0, 5.0, 10.0, 20.0]:
         bt = run_long_short_backtest(
@@ -198,4 +211,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

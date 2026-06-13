@@ -16,7 +16,7 @@ from quant_alpha.data import load_market_data
 from quant_alpha.features import build_features
 from quant_alpha.metrics import performance_summary
 from quant_alpha.risk import exposure_report
-from quant_alpha.signal import compute_alpha, naive_reversal_signal
+from quant_alpha.signal import compute_alpha, compute_blended_alpha, naive_reversal_signal
 from quant_alpha.utils import ensure_dir, load_config, setup_logging
 
 
@@ -24,6 +24,29 @@ def exclude_ticker(series: pd.Series, ticker: str) -> pd.Series:
     """Remove a ticker from a MultiIndex Series."""
 
     return series[series.index.get_level_values("ticker") != ticker]
+
+
+def build_alpha(features: pd.DataFrame, signal_cfg: dict) -> pd.DataFrame:
+    """Build single-sleeve or blended alpha from config."""
+
+    if signal_cfg.get("mode", "single") == "blend":
+        return compute_blended_alpha(
+            features,
+            sleeves=signal_cfg["sleeves"],
+            winsor_lower=signal_cfg.get("winsor_lower", 0.01),
+            winsor_upper=signal_cfg.get("winsor_upper", 0.99),
+            shift_days=signal_cfg.get("shift_days", 1),
+        )
+    return compute_alpha(
+        features,
+        base_feature=signal_cfg.get("base_feature", "residual_1d_return"),
+        direction=signal_cfg.get("direction", "reversal"),
+        vol_adjust=signal_cfg.get("vol_adjust", True),
+        liquidity_threshold=signal_cfg.get("liquidity_threshold", 0.4),
+        winsor_lower=signal_cfg.get("winsor_lower", 0.01),
+        winsor_upper=signal_cfg.get("winsor_upper", 0.99),
+        shift_days=signal_cfg.get("shift_days", 1),
+    )
 
 
 def main() -> None:
@@ -38,7 +61,7 @@ def main() -> None:
     market_data = load_market_data(data_file)
     benchmark_ticker = data_cfg.get("benchmark", "SPY")
     features = build_features(market_data, benchmark=benchmark_ticker, **config["features"])
-    alpha = compute_alpha(features, **config["signal"])
+    alpha = build_alpha(features, config["signal"])
     signal = exclude_ticker(alpha["alpha_shifted"], benchmark_ticker)
     naive_signal = exclude_ticker(
         naive_reversal_signal(features, shift_days=config["signal"].get("shift_days", 1)),
