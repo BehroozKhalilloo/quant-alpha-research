@@ -1,0 +1,91 @@
+data:
+  provider: yfinance
+  raw_dir: data/raw
+  processed_dir: data/processed
+  market_data_file: data/raw/ohlcv.csv
+  benchmark: SPY
+  start_date: "2018-01-01"
+  end_date:
+  tickers:
+    - AAPL
+    - MSFT
+    - NVDA
+    - AMZN
+    - META
+    - GOOGL
+    - GOOG
+    - BRK-B
+    - AVGO
+    - JPM
+    - LLY
+    - V
+    - XOM
+    - UNH
+    - MA
+    - COST
+    - PG
+    - HD
+    - NFLX
+    - JNJ
+    - BAC
+    - ABBV
+    - CRM
+    - KO
+    - MRK
+    - CVX
+    - WMT
+    - AMD
+    - PEP
+    - ORCL
+    - TMO
+    - LIN
+    - MCD
+    - CSCO
+    - ACN
+    - ABT
+    - DIS
+    - GE
+    - IBM
+    - INTU
+    - VZ
+    - QCOM
+    - CAT
+    - TXN
+    - AMGN
+    - PM
+    - NOW
+    - ISRG
+    - NKE
+    - SPY
+
+features:
+  beta_window: 60
+  vol_window: 21
+  liquidity_window: 60
+  volume_window: 20
+
+signal:
+  liquidity_threshold: 0.40
+  winsor_lower: 0.01
+  winsor_upper: 0.99
+  shift_days: 1
+
+validation:
+  forward_horizon: 1
+  quantiles: 10
+
+portfolio:
+  weighting: equal
+  max_weight: 0.10
+
+backtest:
+  holding_period: 1
+  transaction_cost_bps: 5.0
+
+report:
+  output_file: reports/generated_report.md
+  figures_dir: reports/figures
+
+logging:
+  level: INFO
+
