@@ -1,6 +1,6 @@
 # Cross-Sectional Equity Alpha Research: Liquidity-Adjusted Reversal Signal
 
-This repository is a reproducible quant research project for a daily cross-sectional US equity alpha signal. It is designed to show signal design, data engineering, statistical validation, portfolio construction, transaction-cost-aware backtesting, risk checks, and clear research communication.
+This repository is a reproducible quant research project for a daily cross-sectional US equity alpha signal. It is designed to show signal design, data engineering, statistical validation, portfolio construction, transaction-cost-aware backtesting, robustness analysis, risk checks, and clear research communication.
 
 It is not a live trading system, broker integration, or investment recommendation.
 
@@ -8,7 +8,9 @@ It is not a live trading system, broker integration, or investment recommendatio
 
 Quant research work is not just writing a return formula. A credible research workflow needs a clean data contract, explicit bias controls, careful signal timing, validation metrics, portfolio construction assumptions, and honest reporting. This repo is structured around that workflow.
 
-The implementation avoids toy moving-average crossover logic. The signal is cross-sectional, liquidity-aware, configurable across reversal specifications, and evaluated with IC, decile spreads, long-short returns, turnover, drawdown, and exposure diagnostics.
+The implementation avoids toy moving-average crossover logic. The signal is cross-sectional, liquidity-aware, configurable across reversal specifications, and evaluated with IC, decile spreads, long-short returns, turnover, drawdown, transaction-cost sensitivity, train/test splits, and exposure diagnostics.
+
+The current default candidate is not marketed as production-ready alpha. It is a positive research candidate: five-day reversal has positive in-sample and post-2022 rank IC, outperforms a naive one-day reversal baseline, and remains positive under moderate transaction-cost assumptions. The repo is built to make those claims auditable.
 
 ## Signal Hypothesis
 
@@ -81,6 +83,13 @@ The shifted signal is used for validation and backtesting to reduce look-ahead r
 - rank IC by year;
 - decile forward-return means;
 - naive one-day reversal baseline IC.
+
+`scripts/run_robustness.py` adds:
+
+- candidate comparison across reversal and momentum variants;
+- pre/post split rank IC using the configured split date;
+- transaction-cost sensitivity for the selected default;
+- evidence that the selected candidate is stronger than the weaker baseline variants.
 
 Forward returns are computed from close at date `t` to close at date `t+h`. The prediction target is configurable through `config/default.yaml`.
 
@@ -170,6 +179,7 @@ make backtest
 Generate report figures and markdown:
 
 ```bash
+make robustness
 make report
 ```
 
@@ -185,6 +195,7 @@ Direct script equivalents:
 python scripts/download_data.py
 python scripts/run_research.py
 python scripts/run_backtest.py
+python scripts/run_robustness.py
 python scripts/generate_report.py
 pytest
 ```
@@ -202,6 +213,8 @@ data/processed/rank_ic_by_year.csv
 data/processed/decile_forward_returns.csv
 data/processed/backtest_returns.csv
 data/processed/backtest_summary.csv
+data/processed/robustness_candidates.csv
+data/processed/cost_sensitivity.csv
 data/processed/weights.csv
 reports/generated_report.md
 reports/figures/*.png
@@ -224,6 +237,7 @@ Edit `config/default.yaml` to change:
 - max position weight;
 - holding period;
 - transaction cost in basis points.
+- robustness split date.
 
 ## Limitations
 

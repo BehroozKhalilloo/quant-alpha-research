@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from quant_alpha.plotting import (
     plot_beta_exposure,
@@ -30,6 +31,12 @@ def read_optional(path: Path, parse_dates: bool = True) -> pd.DataFrame | None:
     return pd.read_csv(path, index_col=0, parse_dates=parse_dates)
 
 
+def read_optional_no_index(path: Path) -> pd.DataFrame | None:
+    if not path.exists():
+        return None
+    return pd.read_csv(path)
+
+
 def markdown_table(frame: pd.DataFrame | None) -> str:
     """Render a compact markdown table without optional dependencies."""
 
@@ -45,6 +52,29 @@ def markdown_table(frame: pd.DataFrame | None) -> str:
     for index, row in display.iterrows():
         lines.append("| " + " | ".join([str(index), *map(str, row.tolist())]) + " |")
     return "\n".join(lines)
+
+
+def plot_table_column(
+    frame: pd.DataFrame | None,
+    column: str,
+    title: str,
+    ylabel: str,
+    path: Path,
+) -> str | None:
+    """Plot a single table column and return a markdown image link."""
+
+    if frame is None or frame.empty or column not in frame:
+        return None
+    fig, ax = plt.subplots(figsize=(8, 3))
+    frame[column].plot(kind="bar", ax=ax)
+    ax.axhline(0.0, color="black", linewidth=1)
+    ax.set_title(title)
+    ax.set_ylabel(ylabel)
+    ax.grid(True, axis="y", alpha=0.3)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, bbox_inches="tight", dpi=150)
+    plt.close(fig)
+    return f"![{title}](figures/{path.name})"
 
 
 def main() -> None:
@@ -63,6 +93,8 @@ def main() -> None:
     ic_summary = read_optional(processed_dir / "ic_summary.csv", parse_dates=False)
     backtest_summary = read_optional(processed_dir / "backtest_summary.csv", parse_dates=False)
     naive_summary = read_optional(processed_dir / "naive_reversal_backtest_summary.csv", parse_dates=False)
+    robustness = read_optional_no_index(processed_dir / "robustness_candidates.csv")
+    cost_sensitivity = read_optional(processed_dir / "cost_sensitivity.csv", parse_dates=False)
 
     figure_lines: list[str] = []
     if returns is not None and "net_return" in returns:
@@ -91,6 +123,27 @@ def main() -> None:
     if beta is not None:
         plot_beta_exposure(beta.iloc[:, 0], figures_dir / "beta_exposure.png")
         figure_lines.append("![Beta exposure](figures/beta_exposure.png)")
+    if robustness is not None and "candidate" in robustness:
+        robustness_plot = robustness.set_index("candidate")
+        link = plot_table_column(
+            robustness_plot,
+            "sharpe",
+            "Candidate Sharpe Comparison",
+            "Sharpe ratio",
+            figures_dir / "candidate_sharpe.png",
+        )
+        if link:
+            figure_lines.append(link)
+    if cost_sensitivity is not None:
+        link = plot_table_column(
+            cost_sensitivity,
+            "sharpe_ratio",
+            "Transaction Cost Sensitivity",
+            "Sharpe ratio",
+            figures_dir / "cost_sensitivity.png",
+        )
+        if link:
+            figure_lines.append(link)
 
     output_file.write_text(
         "\n".join(
@@ -115,9 +168,17 @@ def main() -> None:
                 "",
                 markdown_table(naive_summary),
                 "",
+                "## Robustness Checks",
+                "",
+                markdown_table(robustness.set_index("candidate") if robustness is not None and "candidate" in robustness else robustness),
+                "",
+                "## Transaction Cost Sensitivity",
+                "",
+                markdown_table(cost_sensitivity),
+                "",
                 "## Interpretation",
                 "",
-                "Review IC stability, decile monotonicity, turnover, drawdowns, and beta exposure before drawing any conclusion. The default result is a modest research candidate, not production-ready alpha. Results depend on the configured universe, sample period, transaction costs, and data quality.",
+                "The selected five-day reversal candidate has positive in-sample and post-2022 rank IC, outperforms the naive one-day reversal baseline, and remains positive under moderate transaction-cost assumptions. The evidence is encouraging but not conclusive: performance is cost-sensitive, drawdowns are material, and the default universe is not point-in-time.",
                 "",
                 "## Disclaimer",
                 "",

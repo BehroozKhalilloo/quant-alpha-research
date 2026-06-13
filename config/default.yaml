@@ -85,6 +85,9 @@ backtest:
   holding_period: 5
   transaction_cost_bps: 5.0
 
+robustness:
+  split_date: "2022-01-01"
+
 report:
   output_file: reports/generated_report.md
   figures_dir: reports/figures
