@@ -65,21 +65,24 @@ features:
   volume_window: 20
 
 signal:
-  liquidity_threshold: 0.40
+  base_feature: return_5d
+  direction: reversal
+  vol_adjust: false
+  liquidity_threshold: 0.00
   winsor_lower: 0.01
   winsor_upper: 0.99
   shift_days: 1
 
 validation:
-  forward_horizon: 1
+  forward_horizon: 5
   quantiles: 10
 
 portfolio:
   weighting: equal
-  max_weight: 0.10
+  max_weight: 0.125
 
 backtest:
-  holding_period: 1
+  holding_period: 5
   transaction_cost_bps: 5.0
 
 report:
@@ -88,4 +91,3 @@ report:
 
 logging:
   level: INFO
-

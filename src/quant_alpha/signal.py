@@ -30,6 +30,9 @@ def cross_sectional_winsorize(values: pd.Series, lower: float = 0.01, upper: flo
 
 def compute_alpha(
     features: pd.DataFrame,
+    base_feature: str = "residual_1d_return",
+    direction: str = "reversal",
+    vol_adjust: bool = True,
     liquidity_threshold: float = 0.4,
     min_vol: float = 1e-4,
     winsor_lower: float = 0.01,
@@ -38,15 +41,21 @@ def compute_alpha(
 ) -> pd.DataFrame:
     """Create liquidity-adjusted reversal alpha and its tradable shifted version."""
 
-    required = {"residual_1d_return", "realized_vol_21d", "liquidity_rank"}
+    required = {base_feature, "realized_vol_21d", "liquidity_rank"}
     missing = required - set(features.columns)
     if missing:
         raise ValueError(f"features missing columns: {sorted(missing)}")
 
-    residual_z = cross_sectional_zscore(features["residual_1d_return"])
-    alpha_raw = -residual_z
+    feature_z = cross_sectional_zscore(features[base_feature])
+    if direction == "reversal":
+        alpha_raw = -feature_z
+    elif direction == "momentum":
+        alpha_raw = feature_z
+    else:
+        raise ValueError("direction must be reversal or momentum")
+
     vol = features["realized_vol_21d"].clip(lower=min_vol)
-    alpha_vol_adj = alpha_raw / vol
+    alpha_vol_adj = alpha_raw / vol if vol_adjust else alpha_raw
     liquidity_filter = features["liquidity_rank"] >= liquidity_threshold
     alpha = alpha_vol_adj.where(liquidity_filter)
     alpha = cross_sectional_winsorize(alpha.replace([np.inf, -np.inf], np.nan), winsor_lower, winsor_upper)

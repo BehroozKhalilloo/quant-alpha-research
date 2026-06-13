@@ -30,6 +30,23 @@ def read_optional(path: Path, parse_dates: bool = True) -> pd.DataFrame | None:
     return pd.read_csv(path, index_col=0, parse_dates=parse_dates)
 
 
+def markdown_table(frame: pd.DataFrame | None) -> str:
+    """Render a compact markdown table without optional dependencies."""
+
+    if frame is None or frame.empty:
+        return "Not generated."
+    display = frame.copy()
+    display = display.map(lambda x: f"{x:.6g}" if isinstance(x, float) else x)
+    headers = ["metric", *map(str, display.columns)]
+    lines = [
+        "| " + " | ".join(headers) + " |",
+        "| " + " | ".join(["---"] * len(headers)) + " |",
+    ]
+    for index, row in display.iterrows():
+        lines.append("| " + " | ".join([str(index), *map(str, row.tolist())]) + " |")
+    return "\n".join(lines)
+
+
 def main() -> None:
     config = load_config(ROOT / "config/default.yaml")
     setup_logging(config.get("logging", {}).get("level", "INFO"))
@@ -43,6 +60,9 @@ def main() -> None:
     ic_year = read_optional(processed_dir / "rank_ic_by_year.csv", parse_dates=False)
     deciles = read_optional(processed_dir / "decile_forward_returns.csv", parse_dates=False)
     beta = read_optional(processed_dir / "beta_exposure.csv")
+    ic_summary = read_optional(processed_dir / "ic_summary.csv", parse_dates=False)
+    backtest_summary = read_optional(processed_dir / "backtest_summary.csv", parse_dates=False)
+    naive_summary = read_optional(processed_dir / "naive_reversal_backtest_summary.csv", parse_dates=False)
 
     figure_lines: list[str] = []
     if returns is not None and "net_return" in returns:
@@ -83,9 +103,21 @@ def main() -> None:
                 "",
                 "\n\n".join(figure_lines) if figure_lines else "No figures generated yet. Run research and backtest first.",
                 "",
+                "## IC Summary",
+                "",
+                markdown_table(ic_summary),
+                "",
+                "## Backtest Summary",
+                "",
+                markdown_table(backtest_summary),
+                "",
+                "## Naive Reversal Baseline",
+                "",
+                markdown_table(naive_summary),
+                "",
                 "## Interpretation",
                 "",
-                "Review IC stability, decile monotonicity, turnover, drawdowns, and beta exposure before drawing any conclusion. Results depend on the configured universe, sample period, transaction costs, and data quality.",
+                "Review IC stability, decile monotonicity, turnover, drawdowns, and beta exposure before drawing any conclusion. The default result is a modest research candidate, not production-ready alpha. Results depend on the configured universe, sample period, transaction costs, and data quality.",
                 "",
                 "## Disclaimer",
                 "",

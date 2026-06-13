@@ -2,7 +2,7 @@
 
 ## Abstract
 
-This memo studies a daily cross-sectional equity signal that looks for short-term mean reversion after unusually negative residual returns, conditional on sufficient liquidity and adjusted for realized volatility. The project is structured as a reproducible research pipeline rather than a trading system.
+This memo studies a daily cross-sectional equity signal that looks for short-term mean reversion after unusually negative returns, conditional on sufficient liquidity and controlled portfolio construction. The project is structured as a reproducible research pipeline rather than a trading system.
 
 ## Hypothesis
 
@@ -16,7 +16,7 @@ The analysis should be read with standard caveats: the default ticker list is no
 
 ## Signal Construction
 
-For each stock and date, the pipeline computes one-day return, five-day return, 21-day momentum, 21-day realized volatility, dollar volume, liquidity rank, volume shock, rolling market beta versus SPY, and residual one-day return. The main alpha starts from negative cross-sectional residual return, divides by realized volatility, filters low-liquidity observations, winsorizes cross-sectionally, z-scores by date, and shifts the signal forward one trading day before validation or backtesting.
+For each stock and date, the pipeline computes one-day return, five-day return, 21-day momentum, 21-day realized volatility, dollar volume, liquidity rank, volume shock, rolling market beta versus SPY, and residual one-day return. The default alpha starts from negative cross-sectional five-day return, applies liquidity eligibility, winsorizes cross-sectionally, z-scores by date, and shifts the signal forward one trading day before validation or backtesting. The original one-day residual reversal with volatility adjustment remains available as a configurable specification.
 
 ## Validation Results Placeholder
 
@@ -39,4 +39,3 @@ The default universe is not survivorship-bias free. yfinance adjusted prices are
 ## Next Steps
 
 Add a point-in-time survivorship-bias-controlled universe, robust corporate action validation, sector-neutral scoring, borrow-cost assumptions for shorts, cross-validation across market regimes, and parameter-sensitivity studies.
-

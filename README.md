@@ -8,15 +8,17 @@ It is not a live trading system, broker integration, or investment recommendatio
 
 Quant research work is not just writing a return formula. A credible research workflow needs a clean data contract, explicit bias controls, careful signal timing, validation metrics, portfolio construction assumptions, and honest reporting. This repo is structured around that workflow.
 
-The implementation avoids toy moving-average crossover logic. The signal is cross-sectional, residualized against the market, liquidity-aware, volatility-adjusted, and evaluated with IC, decile spreads, long-short returns, turnover, drawdown, and exposure diagnostics.
+The implementation avoids toy moving-average crossover logic. The signal is cross-sectional, liquidity-aware, configurable across reversal specifications, and evaluated with IC, decile spreads, long-short returns, turnover, drawdown, and exposure diagnostics.
 
 ## Signal Hypothesis
 
-Stocks with unusually negative short-term residual returns may mean-revert over the next trading day or several days. The effect is expected to be more credible when:
+Stocks with unusually negative short-term returns may mean-revert over the next several trading days. The default candidate uses five-day cross-sectional reversal with a five-day holding period. The original one-day residual reversal variant is still configurable and useful as a stricter hypothesis test.
 
-- the move is measured after removing market return using a rolling beta estimate;
+The effect is expected to be more credible when:
+
+- the move is not just broad market exposure;
 - the stock is sufficiently liquid;
-- the signal is scaled by realized volatility so high-noise names do not dominate;
+- high-noise names do not dominate the portfolio;
 - the portfolio is dollar-neutral and constrained.
 
 The project tests this hypothesis. It does not assume it is true.
@@ -48,15 +50,23 @@ Feature construction uses only information known at or before each date close:
 - rolling market beta versus `SPY`;
 - residual one-day return after removing market return.
 
-Main alpha construction:
+Main alpha construction is configurable through `config/default.yaml`. The current default is:
 
 ```text
-alpha_raw = -zscore_cross_section(residual_1d_return)
-alpha_vol_adj = alpha_raw / realized_vol_21d
-alpha = alpha_vol_adj * liquidity_filter
+base_feature = return_5d
+alpha_raw = -zscore_cross_section(base_feature)
+alpha = alpha_raw after liquidity eligibility, winsorization, and daily z-scoring
 alpha = winsorize_cross_section(alpha)
 alpha = zscore_cross_section(alpha)
 alpha_shifted = alpha shifted by one trading day per ticker
+```
+
+Alternative specifications include one-day residual reversal with volatility adjustment:
+
+```text
+base_feature = residual_1d_return
+alpha_raw = -zscore_cross_section(base_feature)
+alpha = alpha_raw / realized_vol_21d
 ```
 
 The shifted signal is used for validation and backtesting to reduce look-ahead risk.
@@ -83,7 +93,7 @@ The backtest is vectorized and daily:
 - dollar-neutral construction;
 - gross exposure target of approximately 1.0;
 - individual position cap;
-- configurable holding period of 1 or 5 days;
+- configurable holding period, with 5 days used by default;
 - transaction costs applied from one-way turnover in basis points;
 - shifted signal at date `t` is applied to the next available close-to-close return.
 
@@ -232,4 +242,3 @@ This is a research repo. It is suitable for demonstrating a disciplined research
 ## Disclaimer
 
 This project is for research and educational purposes only. It is not financial advice, investment advice, or a recommendation to buy or sell any security. It does not include live trading, broker execution, or order management.
-

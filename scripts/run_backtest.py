@@ -60,7 +60,7 @@ def main() -> None:
         quantiles=config["validation"].get("quantiles", 10),
         transaction_cost_bps=config["backtest"].get("transaction_cost_bps", 5.0),
         max_weight=config["portfolio"].get("max_weight", 0.10),
-        holding_period=config["backtest"].get("holding_period", 1),
+        holding_period=1,
         weighting="equal",
     )
     benchmark = benchmark_returns(market_data, benchmark=benchmark_ticker)
